@@ -1,0 +1,18 @@
+<configuration>
+
+  <conversionRule conversionWord="coloredLevel" converterClass="play.api.libs.logback.ColoredLevel" />
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%coloredLevel %message%n%xException{10}</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="play" level="WARN" />
+  <logger name="com.dataintoresults" level="INFO" />
+
+  <root level="OFF">
+    <appender-ref ref="STDOUT" />
+  </root>
+
+</configuration>
