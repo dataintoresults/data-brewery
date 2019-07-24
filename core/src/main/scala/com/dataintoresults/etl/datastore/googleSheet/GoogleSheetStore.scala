@@ -306,21 +306,3 @@ object GoogleSheetStore {
 		store
 	}
 	
-	def main(args : Array[String]) : Unit = {
-	  val xml = <datastore name="sheets" type="googleSheet">
-					<table name="test_primaire" spreadsheetId="115Cg13ZfKvOHFVQUoDRD_eaCW0nSViv5AUiuTDXMZ6w" colStart="A" rowStart="2" sheet="Feuille 1">
-					</table>	
-			</datastore>
-	  
-	  val ds = fromXml(xml.head,  ConfigFactory.load())
-	  
-	  val spreadsheet = ds.spreadsheet("test_primaire").get
-	  
-	  val sink = ds.createDataSink(spreadsheet)
-	  
-	  sink.put(Seq("aab","df"))
-	  sink.put(Seq(null,"dfg"))
-	  sink.put(Seq(9.3,"sdfsdf"))
-	  sink.close()
-	}
-}

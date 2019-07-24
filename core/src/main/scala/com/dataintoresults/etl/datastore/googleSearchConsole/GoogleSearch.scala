@@ -176,7 +176,7 @@ class GoogleSearch {
   private lazy val agoRegex = """(\d+)day.?Ago""".r
   private def parseDate(date: String): String = {
     date match {
-      case dateRegex(_) => date
+      case dateRegex(_,_,_) => date
       case agoRegex(ago) =>
         LocalDate.now(ZoneOffset.UTC)
           .minusDays(ago.toInt)
