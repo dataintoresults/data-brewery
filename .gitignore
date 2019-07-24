@@ -38,3 +38,8 @@ bin/
 # the secret configuration that we don't want on git
 secret.conf
 /secret/
+
+# Metals scala tool
+/.bloop
+/.metals
+/project/.bloop
