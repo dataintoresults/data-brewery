@@ -37,14 +37,13 @@ object XmlHelper {
     def withChilds(newChilds: Seq[Node]) = {
       elem.copy(child = elem.child ++ newChilds)
     }
-
+/*
     def \* (label: String): Seq[Elem] = {
       elem.child flatMap {
         case e: Elem if e.label == label => e
         case e: Elem if e.label == "include" => e \ label
         case _ => None
       }
-    }
+    }*/
   }
 }
-

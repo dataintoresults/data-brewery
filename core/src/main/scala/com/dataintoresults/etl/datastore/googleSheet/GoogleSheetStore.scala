@@ -305,4 +305,4 @@ object GoogleSheetStore {
 		store.parse(dsXml, config)
 		store
 	}
-	
+}

@@ -19,6 +19,11 @@
 package com.dataintoresults.etl.impl
 
 import scala.collection.mutable.Publisher
+import scala.xml.{XML, Elem, Node, NodeSeq}
+import scala.xml.transform.{RewriteRule, RuleTransformer}
+
+import java.nio.file.Path
+
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.Logger
@@ -44,6 +49,7 @@ import com.dataintoresults.etl.datastore.googleSearchConsole.GoogleSearchStore
 import com.dataintoresults.etl.datastore.mongodb.MongoDbStore
 import com.dataintoresults.etl.datastore.http.HttpStore
 import com.dataintoresults.etl.explorer._
+import scala.xml.XML
 
 
 trait DataStoreFactory  {
@@ -80,7 +86,28 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
    */
   
 	def load(dwXml : scala.xml.Node) : Unit = {
-	  dw = fromXmlDataWarehouse(dwXml)
+	  dw = fromXmlDataWarehouse(dwXml)   
+	}
+	
+
+	def load(path: Path): Unit = {
+		val xml = XML.loadFile(path.toString)
+
+		val parentPath = path.getParent()
+
+    val includes = new RewriteRule {
+      override def transform(n: Node): Seq[Node] = n match {
+        case e: Elem if e.label == EtlInclude.label => {
+					val includePath = e \@ "path"
+					XML.loadFile(parentPath.resolve(includePath).toString)
+				}
+        case n => n
+      }
+    }
+
+		val newXml = new RuleTransformer(includes).transform(xml)
+		
+		load(newXml.head)
 	}
   
 	def clear() : Unit = {
@@ -464,6 +491,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 			overseer.runJob(source, sink)	  
 		}
 	}
+
     
 	private def fromXmlDataWarehouse(dwXml : scala.xml.Node) : DataWarehouse = {
 	  dw = new DataWarehouseImpl()

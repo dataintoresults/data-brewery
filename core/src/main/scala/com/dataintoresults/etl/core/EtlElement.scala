@@ -99,6 +99,7 @@ abstract class EtlElement(_label: String) extends EtlElementFactory  {
           val p = fieldMirror.get.asInstanceOf[EtlChilds[EtlElement]]
           elem = elem.withChilds(p.toXml())
         }
+        case _ => {}
       }
     }
     elem

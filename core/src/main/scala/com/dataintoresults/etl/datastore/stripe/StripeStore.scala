@@ -45,8 +45,7 @@ class StripeStore extends EtlDatastore with DataStore {
 	}
  	
 	
-	def createDataSource(stripeTable: StripeTable) : DataSource = {	
-	}	
+	def createDataSource(stripeTable: StripeTable) : DataSource = ???
 }
 
 object StripeStore {
