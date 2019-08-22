@@ -19,6 +19,7 @@
 package com.dataintoresults.util
 
 import scala.xml.{Elem, Node}
+import scala.xml.NodeSeq
 
 object XmlHelper {
   implicit class XmlBetterNode(node : Node) {
@@ -35,6 +36,14 @@ object XmlHelper {
 
     def withChilds(newChilds: Seq[Node]) = {
       elem.copy(child = elem.child ++ newChilds)
+    }
+
+    def \* (label: String): Seq[Elem] = {
+      elem.child flatMap {
+        case e: Elem if e.label == label => e
+        case e: Elem if e.label == "include" => e \ label
+        case _ => None
+      }
     }
   }
 }
