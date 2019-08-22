@@ -1,12 +1,12 @@
-# DataIntoResults Data Factory # 
+# DataIntoResults Data Brewery # 
 
-DataIntoResults Data Factory is an ETL (Extract-Transform-Load) program that connect to many data sources (cloud services, databases, ...) and manage data warehouse workflow.
+DataIntoResults Data Brewery is an ETL (Extract-Transform-Load) program that connect to many data sources (cloud services, databases, ...) and manage data warehouse workflow.
 
 
 What is it for
 ---------------
 
-Data Factory is an ETL tool for data warehouse building meaning :
+Data Brewery is an ETL tool for data warehouse building meaning :
 
 * extracting data from many sources ranging from web services (e.g. Google Analytics), web scrapping, files (e.g. local, over SFTP, Google sheets) and databases (e.g. MySQL, PostgreSQL, MongoDB).
 * designing and modeling your data warehouses using a module approach in a ELT way (Extract-Load-Transform). Most of the transformation are in SQL and leverage you data warehouse computing capability.
@@ -136,7 +136,7 @@ Other :
 How to build
 --------------
 
-Data Factory is a Scala projet that use SBT as a build tool. You can download SBT [here ](https://www.scala-sbt.org/download.html).
+Data Brewery is a Scala projet that use SBT as a build tool. You can download SBT [here ](https://www.scala-sbt.org/download.html).
 
 The following command will produce a .zip in the baton/target/universal directory named baton-xxx.zip where xxx will be the version built.
 
