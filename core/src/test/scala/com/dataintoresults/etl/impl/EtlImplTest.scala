@@ -18,22 +18,77 @@
 
 package com.dataintoresults.etl.impl
 
+import scala.xml.XML
+
 import java.io.StringReader
 import java.time.{LocalDate, LocalDateTime}
-import java.nio.file.Paths
+import java.nio.file.{Files, Paths}
+import java.nio.charset.Charset
 import scala.math.BigDecimal
+
+import org.apache.commons.io.FileUtils
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions._
 
 
 class EtlImplTest extends FunSuite {
-  
-  test("Etl need to preprocess") {
+	val dw = 
+		<datawarehouse>
+			<include path="store/dw.xml"/>
+			<include path="module/business.xml"/>
+		</datawarehouse>
+
+	val store_dw = <datastore name="dw" type="postgresql" host="127.0.0.1" user="joe" password="test"/>
+
+	val module_business = 
+		<module name="business" datastore="dw">
+			<table name="d_date">
+				<source type="query" contentPath="business/d_date_query.sql"><t/></source>
+			</table>
+		</module>
+
 		
-		val etl = new EtlImpl()
-		etl.load(Paths.get("C:/Users/sderi/OneDrive/Projets/Obsidian/3 - Projets/008 - VodFactory/dwh/dw.xml"))
-		println(etl.save())
-    assertResult(etl.save().toString)("b")
+	val sql_query = """
+		select 1 as a,
+			2 as b,
+			1<2 as c	
+		"""
+	val merged_dw = 
+		<datawarehouse>
+			<datastore name="dw" type="postgresql" host="127.0.0.1" user="joe" password="test">
+			</datastore>
+			<module name="business" datastore="dw">
+				<table name="d_date">
+					<source type="query"><![CDATA[select 1 as a, 2 as b, 1<2 as c]]></source>
+				</table>
+			</module>
+		</datawarehouse>
+		
+  test("Etl need to preprocess include elements and contentPath attributes") {
+		// Create files in a temp repertory
+		val basePath = Files.createTempDirectory("com.dataintoresults.etl.impl.EtlImplTest")
+		try {
+			val storePath = Files.createDirectory(basePath.resolve("store"))
+			val modulePath = Files.createDirectory(basePath.resolve("module"))
+			val businessPath = Files.createDirectory(modulePath.resolve("business"))
+
+			val dwPath = basePath.resolve("dw.xml")
+
+			XML.save(dwPath.toString(), dw)
+			XML.save(storePath.resolve("dw.xml").toString(), store_dw)
+			XML.save(modulePath.resolve("business.xml").toString(), module_business)
+
+			Files.write(businessPath.resolve("d_date_query.sql"), sql_query.getBytes)
+			
+			val etl = new EtlImpl()
+			etl.load(dwPath)
+
+			val printer = new scala.xml.PrettyPrinter(80, 2)
+			assertResult(printer.format(etl.save()))(printer.format(merged_dw))
+		}
+		finally {
+			FileUtils.deleteDirectory(basePath.toFile())
+		}
 	}
 }

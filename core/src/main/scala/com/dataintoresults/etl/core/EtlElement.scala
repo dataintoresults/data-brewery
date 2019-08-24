@@ -87,19 +87,23 @@ abstract class EtlElement(_label: String) extends EtlElementFactory  {
           val p = fieldMirror.get.asInstanceOf[EtlParameter[String]]
           if(p.source == Some(EtlParameterSource.Xml) || p.source == Some(EtlParameterSource.Given))
             elem = elem % Attribute(null, p.name,  p.value, Null)
+          else if(p.source == Some(EtlParameterSource.CData))
+            elem = elem.copy(child = elem.child ++ scala.xml.PCData(p.value))
         }
         else if(tpe <:< typeOf[EtlParameter[Int]]) {
           val fieldMirror = mirror.reflectField(term)
           val p = fieldMirror.get.asInstanceOf[EtlParameter[Int]]
           if(p.source == Some(EtlParameterSource.Xml) || p.source == Some(EtlParameterSource.Given))
             elem = elem % Attribute(null, p.name,  p.value.toString, Null)
+          else if(p.source == Some(EtlParameterSource.CData))
+            elem = elem.copy(child = elem.child ++ scala.xml.PCData(p.value.toString))
         }
         else if(tpe <:< typeOf[EtlChilds[_]]) {
           val fieldMirror = mirror.reflectField(term)
           val p = fieldMirror.get.asInstanceOf[EtlChilds[EtlElement]]
           elem = elem.withChilds(p.toXml())
         }
-        case _ => {}
+        case _ => {} 
       }
     }
     elem

@@ -152,7 +152,9 @@ class EtlParameter[T: EtlParameterType](
     }
 
     val cdataValue = 
-      if(cdata && node.isDefined) Some(EtlParameterHelper.parse[T](node.get.text.trim))
+      if(cdata && node.isDefined && node.get.text.trim.length > 0) { 
+        Some(EtlParameterHelper.parse[T](node.get.text.trim))
+      }
       else None
     
     source = Seq(

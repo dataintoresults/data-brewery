@@ -12,6 +12,8 @@ libraryDependencies ++= Seq(
   "com.microsoft.sqlserver" % "mssql-jdbc" % "6.4.0.jre8",
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.2.1",
   
+  "commons-io" % "commons-io" % "2.6",
+
   // CSV stuff 
   "com.univocity" %  "univocity-parsers" % "2.7.6",
 

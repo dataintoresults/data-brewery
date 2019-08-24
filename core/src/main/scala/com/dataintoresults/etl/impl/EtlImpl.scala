@@ -22,7 +22,7 @@ import scala.collection.mutable.Publisher
 import scala.xml.{XML, Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -90,24 +90,33 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	}
 	
 
-	def load(path: Path): Unit = {
+	def load(path: Path): Unit = {		
+		load(loadPath(path))
+	}
+
+	private def loadPath(path: Path): scala.xml.Node = {
 		val xml = XML.loadFile(path.toString)
 
 		val parentPath = path.getParent()
 
     val includes = new RewriteRule {
       override def transform(n: Node): Seq[Node] = n match {
-        case e: Elem if e.label == EtlInclude.label => {
-					val includePath = e \@ "path"
-					XML.loadFile(parentPath.resolve(includePath).toString)
+        case e: Elem if e.label == "include" => {
+					val includePath = e \@? "path" getOrElse {
+						throw new RuntimeException("There is a include element in file ${path.toString} without a mandatory path attribute.")
+					}
+					loadPath(parentPath.resolve(includePath))
+				}
+				case e: Elem if e.attribute("contentPath").isDefined => {
+					val contentPath = e \@ "contentPath"
+					val content = Files.readAllLines(parentPath.resolve(contentPath)).toArray().mkString("\n")
+					e.copy(child = e.child ++ scala.xml.PCData(content))
 				}
         case n => n
       }
     }
 
-		val newXml = new RuleTransformer(includes).transform(xml)
-		
-		load(newXml.head)
+		new RuleTransformer(includes).transform(xml).head
 	}
   
 	def clear() : Unit = {

@@ -60,7 +60,6 @@ class SourceQuery extends EtlSource {
 
 	def query = _query.value 
 
-  
   override def processOnModule(etl: EtlImpl, toModule: Module, toTable: Table) = Some(query)
   
   override def processOnDataStore(etl: EtlImpl, ds: DataStore, dsTable: Table): Option[DataSource] =
