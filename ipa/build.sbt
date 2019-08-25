@@ -1,4 +1,4 @@
-mainClass in Compile := Some("com.dataintoresults.baton.Baton")
+mainClass in Compile := Some("com.dataintoresults.ipa.Ipa")
 
 
 libraryDependencies ++= Seq(

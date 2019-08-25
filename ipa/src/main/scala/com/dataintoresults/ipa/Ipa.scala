@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.baton
+package com.dataintoresults.ipa
 
 import java.io._
 import java.util.UUID.randomUUID
@@ -74,15 +74,15 @@ case class CliConfig(
 )
   
   
-object Baton {
+object Ipa {
 
   LoggerFactory.getLogger("root").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
-  LoggerFactory.getLogger("com.dataintoresults.baton").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.INFO)
+  LoggerFactory.getLogger("com.dataintoresults.ipa").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.INFO)
 
   private val logger: Logger = Logger(this.getClass())
-  val programName = "baton"
-  val programVersion = "1.0.0-M1"
-  val programDate = "20190706"
+  val programName = "ipa"
+  val programVersion = "1.0.0-M2"
+  val programDate = "20190825"
   
   var nbDs: Int = _
   var nbMod: Int = _
@@ -125,12 +125,12 @@ object Baton {
        LoggerFactory.getLogger("root").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
        LoggerFactory.getLogger("play").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
        LoggerFactory.getLogger("com.dataintoresults").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
-       LoggerFactory.getLogger("com.dataintoresults.baton").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
+       LoggerFactory.getLogger("com.dataintoresults.ipa").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
      }
      else if(cliConfig.logLevel > 0) {
        LoggerFactory.getLogger("play").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.INFO)
        LoggerFactory.getLogger("com.dataintoresults").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.INFO)
-       LoggerFactory.getLogger("com.dataintoresults.baton").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.DEBUG)
+       LoggerFactory.getLogger("com.dataintoresults.ipa").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.DEBUG)
      }
      
      setConfig(cliConfig)
@@ -151,7 +151,7 @@ object Baton {
   }
    
   def logAction(command: String, uuid: String, stage: String): Unit = {
-    val watcherUrl = globalConfig.getString("baton.watcherUrl")
+    val watcherUrl = globalConfig.getString("ipa.watcherUrl")
      
     if(watcherUrl == null || watcherUrl.equals("none"))
       return
@@ -159,10 +159,10 @@ object Baton {
      implicit val system = ActorSystem()
      implicit val materializer = ActorMaterializer()
      val ws = StandaloneAhcWSClient()
-     val postedData = s"command=$command&uuid=$uuid&stage=$stage&version=${Baton.programVersion+"-"+Baton.programDate}&" + 
+     val postedData = s"command=$command&uuid=$uuid&stage=$stage&version=${Ipa.programVersion+"-"+Ipa.programDate}&" + 
        s"nbds=${nbDs}&nbmod=${nbMod}&dstypes=${distDs}"
      
-     if(globalConfig.getBoolean("baton.showPostedData"))
+     if(globalConfig.getBoolean("ipa.showPostedData"))
        logger.info(s"Sending $postedData to $watcherUrl")
      else 
        logger.debug(s"Sending $postedData to $watcherUrl")
@@ -233,7 +233,7 @@ object Baton {
     }
   }
   
-  val parser = new scopt.OptionParser[CliConfig]("baton") {
+  val parser = new scopt.OptionParser[CliConfig]("ipa") {
     head(programName, programVersion, programDate)
 
     opt[File]('i', "dw").valueName("<dwFile>").
@@ -292,10 +292,10 @@ object Baton {
     parser.parse(args, CliConfig()) match {
       case Some(cliConfig) =>
         cliConfig.command match {
-          case None => parser.showUsage()
           case Some("read") => read(cliConfig)
           case Some("run-module") => runModule(cliConfig)
           case Some("run-datastore") => runDatastore(cliConfig)
+          case _ => parser.showUsage()
         }
         
       case None =>

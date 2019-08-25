@@ -11,8 +11,8 @@
   </appender>
 
   <logger name="play" level="WARN" />
-  <logger name="esotech" level="WARN" />
-  <logger name="esotech.baton" level="INFO" />
+  <logger name="com.dataintoresults" level="WARN" />
+  <logger name="com.dataintoresults.ipa" level="INFO" />
 
   <root level="OFF">
     <appender-ref ref="STDOUT" />
