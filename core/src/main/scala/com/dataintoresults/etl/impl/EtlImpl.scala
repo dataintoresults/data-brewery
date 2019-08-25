@@ -22,7 +22,7 @@ import scala.collection.mutable.Publisher
 import scala.xml.{XML, Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
 
-import java.nio.file.{Files, Path}
+import java.nio.file.{Files, Path, Paths}
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -50,7 +50,7 @@ import com.dataintoresults.etl.datastore.mongodb.MongoDbStore
 import com.dataintoresults.etl.datastore.http.HttpStore
 import com.dataintoresults.etl.explorer._
 import scala.xml.XML
-
+import scala.collection.JavaConverters._
 
 trait DataStoreFactory  {
   
@@ -105,7 +105,21 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 					val includePath = e \@? "path" getOrElse {
 						throw new RuntimeException("There is a include element in file ${path.toString} without a mandatory path attribute.")
 					}
-					loadPath(parentPath.resolve(includePath))
+
+					// Is there some pattern matching or not
+					if(includePath contains "*") {
+						val separator = parentPath.getFileSystem().getSeparator()
+						// Unsure why, but the matcher doesn't like filesystem separator
+						val matcherPattern = "glob:" + parentPath.toString.replace(separator, "/") + "/" + includePath
+						val matcher = parentPath.getFileSystem().getPathMatcher(matcherPattern)
+						Files.walk(parentPath) 
+							.iterator.asScala // Convert to Scala
+							.filter( path => matcher.matches(path)) // filter only matched
+							.map( path => loadPath(parentPath.resolve(path))) // load XML
+							.toSeq
+					}
+					else 
+						loadPath(parentPath.resolve(includePath))
 				}
 				case e: Elem if e.attribute("contentPath").isDefined => {
 					val contentPath = e \@ "contentPath"

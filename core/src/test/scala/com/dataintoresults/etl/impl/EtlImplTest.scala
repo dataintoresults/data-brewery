@@ -33,13 +33,20 @@ import org.scalatest.Assertions._
 
 
 class EtlImplTest extends FunSuite {
-	val dw = 
+	val dw1 = 
 		<datawarehouse>
 			<include path="store/dw.xml"/>
 			<include path="module/business.xml"/>
 		</datawarehouse>
 
+	val dw2 = 
+		<datawarehouse>
+			<include path="store/*.xml"/>
+			<include path="store_*.xml"/>
+		</datawarehouse>
+
 	val store_dw = <datastore name="dw" type="postgresql" host="127.0.0.1" user="joe" password="test"/>
+	val store_hubspot = <datastore name="hubspot" type="hubspot" apiKey="aaaaaa-bbb-ccc-ddddddddddddd"/>
 
 	val module_business = 
 		<module name="business" datastore="dw">
@@ -54,15 +61,23 @@ class EtlImplTest extends FunSuite {
 			2 as b,
 			1<2 as c	
 		"""
-	val merged_dw = 
+
+	val merged_dw1 = 
 		<datawarehouse>
-			<datastore name="dw" type="postgresql" host="127.0.0.1" user="joe" password="test">
-			</datastore>
+			<datastore name="dw" type="postgresql" host="127.0.0.1" user="joe" password="test"/>
 			<module name="business" datastore="dw">
 				<table name="d_date">
 					<source type="query"><![CDATA[select 1 as a, 2 as b, 1<2 as c]]></source>
 				</table>
 			</module>
+		</datawarehouse>
+
+	val merged_dw2 = 
+		<datawarehouse>
+			<datastore name="dw" type="postgresql" host="127.0.0.1" user="joe" password="test"/>
+			<datastore name="hubspot" type="hubspot" apiKey="aaaaaa-bbb-ccc-ddddddddddddd"/>
+			<datastore name="dw" type="postgresql" host="127.0.0.1" user="joe" password="test"/>
+			<datastore name="hubspot" type="hubspot" apiKey="aaaaaa-bbb-ccc-ddddddddddddd"/>
 		</datawarehouse>
 		
   test("Etl need to preprocess include elements and contentPath attributes") {
@@ -75,7 +90,7 @@ class EtlImplTest extends FunSuite {
 
 			val dwPath = basePath.resolve("dw.xml")
 
-			XML.save(dwPath.toString(), dw)
+			XML.save(dwPath.toString(), dw1)
 			XML.save(storePath.resolve("dw.xml").toString(), store_dw)
 			XML.save(modulePath.resolve("business.xml").toString(), module_business)
 
@@ -85,7 +100,36 @@ class EtlImplTest extends FunSuite {
 			etl.load(dwPath)
 
 			val printer = new scala.xml.PrettyPrinter(80, 2)
-			assertResult(printer.format(etl.save()))(printer.format(merged_dw))
+			assertResult(printer.format(etl.save()))(printer.format(merged_dw1))
+		}
+		finally {
+			FileUtils.deleteDirectory(basePath.toFile())
+		}
+	}
+
+  test("Etl need to preprocess include elements with wildcard path") {
+		// Create files in a temp repertory
+		val basePath = Files.createTempDirectory("com.dataintoresults.etl.impl.EtlImplTest2")
+		try {
+			val storePath = Files.createDirectory(basePath.resolve("store"))
+
+			val dwPath = basePath.resolve("dw.xml")
+
+			XML.save(dwPath.toString(), dw2)
+
+			XML.save(storePath.resolve("dw.xml").toString(), store_dw)
+			XML.save(storePath.resolve("hubspot.xml").toString(), store_hubspot)
+
+			
+			XML.save(basePath.resolve("store_dw.xml").toString(), store_dw)
+			XML.save(basePath.resolve("store_hubspot.xml").toString(), store_hubspot)
+			
+			val etl = new EtlImpl()
+			etl.load(dwPath)
+
+			val printer = new scala.xml.PrettyPrinter(80, 2)
+
+			assertResult(printer.format(etl.save()))(printer.format(merged_dw2))
 		}
 		finally {
 			FileUtils.deleteDirectory(basePath.toFile())
