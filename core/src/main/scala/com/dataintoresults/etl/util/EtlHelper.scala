@@ -75,6 +75,7 @@ object EtlHelper {
         case (null, c) => (c.name -> JsNull)
         case (o: JsObject, c) => (c.name -> o)
         case (x: Object, c) => (c.name -> JsString(x.toString))
+        case (_, _) => throw new RuntimeException("Issue to convert the dataset to Json, missing a column")
         }))
       }
     } map { r => Json.stringify(r) } mkString "\n"

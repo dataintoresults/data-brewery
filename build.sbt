@@ -1,10 +1,10 @@
-name := """data-factory"""
+name := """data-brewery"""
 
 
 lazy val commonSettings = Seq(
   organization := "com.dataintoresults",
   version := "1.0.0-M1",
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.9",
   maintainer := "contact@dataintoresults.com"
 )
 
