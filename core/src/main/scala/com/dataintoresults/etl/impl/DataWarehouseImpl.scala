@@ -21,12 +21,14 @@ package com.dataintoresults.etl.impl
 import com.dataintoresults.etl.core.DataStore
 import com.dataintoresults.etl.core.DataWarehouse
 import com.dataintoresults.etl.core.Module
+import com.dataintoresults.etl.core.Process
 
 
 
 class DataWarehouseImpl extends DataWarehouse {
 	private var _datastores: Seq[DataStore] = Nil
 	private var _modules: Seq[Module] = Nil
+	private var _processes: Seq[Process] = Nil
 
 	
 	def datastores = _datastores
@@ -56,6 +58,12 @@ class DataWarehouseImpl extends DataWarehouse {
 	
 	def deleteModule(name : String) : Unit = {
 		_modules = _modules filter { _.name != name }
+	}	
+	
+	def processes = _processes
+	
+	def processes_=(processes: Seq[Process]) {
+    _processes = processes
 	}
 	
 	def close() : Unit = {

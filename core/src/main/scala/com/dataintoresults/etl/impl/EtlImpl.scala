@@ -33,6 +33,7 @@ import com.dataintoresults.util.Using.using
 import com.dataintoresults.util.XmlHelper._
 import com.dataintoresults.etl.core._
 import com.dataintoresults.etl.impl.source._
+import com.dataintoresults.etl.impl.process._
 import com.dataintoresults.etl.datastore.flat.FlatFileStore
 import com.dataintoresults.etl.datastore.googleAnalytics.GoogleAnalyticsStore
 import com.dataintoresults.etl.datastore.googleSheet.GoogleSheetStore
@@ -77,7 +78,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
    */
   
   // Start with an empty data warehouse
-  private var dw : DataWarehouse = new DataWarehouseImpl()
+  private var dw = new DataWarehouseImpl()
   
   def dataWarehouse : DataWarehouse = dw
   
@@ -308,6 +309,10 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
     dw.modules find { _.name == module } getOrElse { throw new RuntimeException(s"Module with name '${module}' not found.") }
 	}
 	
+	def findProcess(process: String) : Process = {
+    dw.processes find { _.name == process } getOrElse { throw new RuntimeException(s"Process with name '${process}' not found.") }
+	}
+	
 	def addSqlDataStore(name: String, backend: String, host: String, database: String, user: String, password: String) : Unit = {
 	  val spec = 
       <datastore name={name} type={backend} host={host} database={database} user={user} password={password}>
@@ -447,6 +452,26 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	  runDataStoreTable(dataStore, table)
 	}
 	
+	def runProcess(processName: String) : Unit = {	  
+		val process = findProcess(processName)
+		
+	  publish(Json.obj("process" -> processName, "step" -> "start"))
+		
+		process.tasks foreach { task =>
+			task.taskType match {
+				case Task.MODULE => {
+					publish(Json.obj("process" -> processName, "step" -> "runModule", "module" -> task.module))
+					runModule(task.module)
+				}
+				case Task.DATASTORE => {
+					publish(Json.obj("process" -> processName, "step" -> "runDatastore", "datastore" -> task.datastore))
+					runModule(task.module)
+				}
+			}
+		}
+	  publish(Json.obj("process" -> processName, "step" -> "end"))
+	}
+	
 	
 	
 /*	def runReplicate(module: Module, replicate: ReplicateDataStore) = {
@@ -516,8 +541,14 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	}
 
     
-	private def fromXmlDataWarehouse(dwXml : scala.xml.Node) : DataWarehouse = {
-	  dw = new DataWarehouseImpl()
+	private def fromXmlDataWarehouse(dwXml : scala.xml.Node) : DataWarehouseImpl = {
+		dw = new DataWarehouseImpl()
+
+		/* TODO :  
+		 * there is a need to do addDatastore and not go throught a functional ways with map
+		 * as a datastore can reference a previous datastore.
+		 * This should change.
+		 */
 		(dwXml  \ "datastore").foreach( dsXml =>
 			dw.addDatastore(fromXmlDataStore(dsXml))
 		  )
@@ -525,6 +556,9 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 		(dwXml  \ "module").foreach( modXml =>
 			dw.addModule(fromXmlModule(modXml))
 		  )
+		
+		dw.processes = (dwXml  \ "process") map { dsXml =>	fromXmlProcess(dsXml)	}
+		  
 		dw
 	}
 		
@@ -532,6 +566,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	  val dwXml = <datawarehouse>
 		    { dw.datastores map { ds => ds.toXml() }	}
 		    { dw.modules map { mod => mod.toXml() }	}
+		    { dw.processes map { process => process.toXml() }	}
 			</datawarehouse>
 		dwXml
 	}
@@ -559,7 +594,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
       }
 		}
 	}	
-		
+
 	private def toXmlDataStore(ds: DataStore) : scala.xml.Node = {
 	  ds.toXml()
 	}
@@ -568,9 +603,8 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	private def fromXmlModule(modXml : scala.xml.Node) : Module = {
 	  val dsName = modXml  \@? "datastore" getOrElse 
       (throw new RuntimeException(s"When you declare a module, you need to have a datastore attribute."))
-	  
-	  
-	  val ds = dw.datastores find { _.name == dsName } getOrElse { throw new RuntimeException(s"Data store '${dsName}' not found.") }
+			  
+	  val ds = findDataStore(dsName)
 	  
 	  val sqlStore = ds.asInstanceOf[SqlStore]
 	  
@@ -578,5 +612,10 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	  mod.fromXml(modXml)
 	  mod
 	}
+	
+	private def fromXmlProcess(dsXml : scala.xml.Node) : Process = {	  
+		EtlProcess.fromXml(dsXml, config)
+	}	
+		
 	
 }

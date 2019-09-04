@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (C) 2018 by Obsidian SAS : https://dataintoresults.com/
+ * Copyright (C) 2019 by Obsidian SAS : https://dataintoresults.com/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,29 +19,19 @@
 package com.dataintoresults.etl.core
 
 /**
- * Represents a set of data stores and a set of modules.s
+ * A process is a list of tasks.
  */
-trait DataWarehouse {
-	
-	def datastores : Seq[DataStore]
-	
-	def datastores_=(datastores: Seq[DataStore]) : Unit
-	
-	def addDatastore(datastore : DataStore) : Unit 
-	
-	def removeDatastore(name : String) : Unit
+trait Process {
+
+	/**
+	 * Returns the name of this process
+	 */
+	def name : String
+
+	/**
+	 * Returns a list of tasks
+	 */
+	def tasks : Seq[Task]
 		
-	def modules : Seq[Module]
-	
-	def modules_=(modules: Seq[Module]) : Unit
-	
-	def addModule(module : Module) : Unit
-	
-	def deleteModule(name : String) : Unit
-	
-	def processes : Seq[Process]
-	
-	def close() : Unit
-	
-	def test() : Boolean 
+  def toXml() : scala.xml.Node
 }

@@ -300,6 +300,7 @@ class EtlParent[T : TypeTag]()  {
 
   def hasParent = _parent !=  null
   def get = _parent
+  def value = _parent
 
   def set(p:T):Unit  = _parent = p
 

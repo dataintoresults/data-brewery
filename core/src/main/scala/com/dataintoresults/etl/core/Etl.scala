@@ -64,6 +64,8 @@ trait Etl {
 	def runDataStoreTable(dataStoreName: String, tableName: String) : Unit
 	
 	def runQuery(store: String, query: String) : DataSet
+
+	def runProcess(processName: String) : Unit
 	
 	def exploreDataStore(store: String) : DataStoreExplorer
 	

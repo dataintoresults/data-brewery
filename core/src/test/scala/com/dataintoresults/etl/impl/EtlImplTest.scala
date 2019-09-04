@@ -30,6 +30,8 @@ import org.apache.commons.io.FileUtils
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions._
+import com.dataintoresults.etl.util.EtlHelper
+import com.dataintoresults.etl.datastore.sql.SqlStore
 
 
 class EtlImplTest extends FunSuite {
@@ -134,5 +136,33 @@ class EtlImplTest extends FunSuite {
 		finally {
 			FileUtils.deleteDirectory(basePath.toFile())
 		}
+	}
+
+
+
+	val xmlProcess = 
+		<datawarehouse>
+			<datastore name="dw" type="h2"/>
+			<module name="business" datastore="dw">
+				<table name="d_date">
+					<source type="query"><![CDATA[select 1 as a, 2 as b, 1<2 as c]]></source>
+				</table>
+			</module>
+			<process name="dummy">
+				<task module="business"/>
+			</process>
+		</datawarehouse>
+	
+  test("Etl ability to process 'process' elements") {
+		val etl = new EtlImpl()
+		etl.load(xmlProcess)
+
+		etl.findDataStore("dw").asInstanceOf[SqlStore].dropSchemaIfExists("business")
+
+		etl.runProcess("dummy") 
+
+		assertResult(EtlHelper.printDataset(etl.runQuery("dw", "select * from business.d_date")))("A, B, C\n1, 2, 1")
+
+
 	}
 }
