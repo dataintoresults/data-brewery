@@ -86,13 +86,17 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 	
 	protected def defaultPort : String
  	protected def defaultDatabase = "nodatabase"
+	
+  protected def defaultHost : Option[String] = None
+  protected def defaultUser : Option[String] = None
+  protected def defaultPassword : Option[String] = None
 
  	
-	private val _host = EtlParameter[String](nodeAttribute="host", configAttribute="dw.datastore."+name+".host")
+	private val _host = EtlParameter[String](nodeAttribute="host", configAttribute="dw.datastore."+name+".host", defaultValue=defaultHost)
 	private val _port = EtlParameter[String](nodeAttribute="port", configAttribute="dw.datastore."+name+".port", defaultValue=defaultPort)
   private val _database = EtlParameter[String](nodeAttribute="database", configAttribute= "dw.datastore."+name+".database", defaultValue=defaultDatabase)
-  private val _user = EtlParameter[String](nodeAttribute="user", configAttribute="dw.datastore."+name+".user")
-  private val _password = EtlParameter[String](nodeAttribute="password", configAttribute="dw.datastore."+name+".password")
+  private val _user = EtlParameter[String](nodeAttribute="user", configAttribute="dw.datastore."+name+".user", defaultValue=defaultUser)
+  private val _password = EtlParameter[String](nodeAttribute="password", configAttribute="dw.datastore."+name+".password", defaultValue=defaultPassword)
   private val _sshUser = EtlParameter[String](nodeAttribute="sshUser", configAttribute= "dw.datastore."+name+".sshUser", defaultValue="")
   private val _sshPassword = EtlParameter[String](nodeAttribute="sshPassword", configAttribute="dw.datastore."+name+".sshPassword", defaultValue="")
   private val _sshPrivateKeyLocation = EtlParameter[String](nodeAttribute="sshPrivateKeyLocation", 
@@ -369,6 +373,13 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   def dropTableIfExists(schema: String, name: String) : Unit = {
     withDBLocalSession { session => 
       val query = s"drop table if exists ${sqlTablePath(schema, name)}"    			
+			session.execute(query)
+		}
+  }
+
+  def dropSchemaIfExists(schema: String) : Unit = {
+    withDBLocalSession { session => 
+      val query = s"drop schema if exists $schema"    			
 			session.execute(query)
 		}
   }

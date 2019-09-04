@@ -46,10 +46,15 @@ class H2Store extends SqlStore {
 	def jdbcDriver : String = "org.h2.Driver"
 	def jdbcUrl : String = createJdbcUrl(host, port, database)
 	
+	override protected def defaultHost : Option[String] = Some("mem")
+	// For H2 we allow not givin user/password parameters
+  override protected def defaultUser : Option[String] = Some("dummy")
+  override protected def defaultPassword : Option[String] = Some("dummy")
 	
  	override def defaultDatabase = "~/h2db"
- 	
-	def createJdbcUrl(host: String, port: String, database: String) : String = s"jdbc:h2:${database}"
+	 
+
+	def createJdbcUrl(host: String, port: String, database: String) : String = s"jdbc:h2:${host}:${database}"
 	
  	override def toString = s"H2Store[${name},${host},${user},${password}]"
 
