@@ -141,7 +141,7 @@ Data Brewery is a Scala projet that use SBT as a build tool. You can download SB
 The following command will produce a .zip in the baton/target/universal directory named baton-xxx.zip where xxx will be the version built.
 
 ```
-sbt baton/dist
+sbt ipa/dist
 ```
 
 You can decompress this archive and the executable is under the bin directory (baton for Linux/MacOS or baton.bat for Windows).
