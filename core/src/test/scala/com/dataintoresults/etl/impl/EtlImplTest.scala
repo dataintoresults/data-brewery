@@ -102,7 +102,7 @@ class EtlImplTest extends FunSuite {
 			etl.load(dwPath)
 
 			val printer = new scala.xml.PrettyPrinter(80, 2)
-			assertResult(printer.format(etl.save()))(printer.format(merged_dw1))
+			assertResult(printer.format(merged_dw1))(printer.format(etl.save()))
 		}
 		finally {
 			FileUtils.deleteDirectory(basePath.toFile())
@@ -131,7 +131,7 @@ class EtlImplTest extends FunSuite {
 
 			val printer = new scala.xml.PrettyPrinter(80, 2)
 
-			assertResult(printer.format(etl.save()))(printer.format(merged_dw2))
+			assertResult(printer.format(merged_dw2))(printer.format(etl.save()))
 		}
 		finally {
 			FileUtils.deleteDirectory(basePath.toFile())
@@ -142,13 +142,18 @@ class EtlImplTest extends FunSuite {
 
 	val xmlProcess = 
 		<datawarehouse>
-			<datastore name="dw" type="h2"/>
+			<datastore name="dw" type="h2">
+				<table name="test">
+					<source type="query"><![CDATA[select 2 as a, 2 as b, 1<2 as c]]></source>
+				</table>
+			</datastore>
 			<module name="business" datastore="dw">
 				<table name="d_date">
 					<source type="query"><![CDATA[select 1 as a, 2 as b, 1<2 as c]]></source>
 				</table>
 			</module>
 			<process name="dummy">
+				<task datastore="dw"/>
 				<task module="business"/>
 			</process>
 		</datawarehouse>
@@ -161,7 +166,14 @@ class EtlImplTest extends FunSuite {
 
 		etl.runProcess("dummy") 
 
-		assertResult(EtlHelper.printDataset(etl.runQuery("dw", "select * from business.d_date")))("A, B, C\n1, 2, 1")
+		//
+		assertResult("A, B, C\n1, 2, 1", "Check module processing") {
+			EtlHelper.printDataset(etl.runQuery("dw", "select * from business.d_date"))
+		}
+
+		assertResult("A, B, C\n2, 2, 1", "Check datastore processing") {
+			EtlHelper.printDataset(etl.runQuery("dw", "select * from test"))
+		}
 
 
 	}

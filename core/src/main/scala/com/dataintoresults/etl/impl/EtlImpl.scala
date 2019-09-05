@@ -465,7 +465,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 				}
 				case Task.DATASTORE => {
 					publish(Json.obj("process" -> processName, "step" -> "runDatastore", "datastore" -> task.datastore))
-					runModule(task.module)
+					runDataStore(task.datastore)
 				}
 			}
 		}
@@ -534,9 +534,16 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	    
 	    
 	  // We grab the data source from the Source
-	  table.source.asInstanceOf[EtlSource].processOnDataStore(this, dataStore, table) foreach { source =>
-			val sink = table.write()
-			overseer.runJob(source, sink)	  
+	  table.source match {
+			case src: SourceQuery => {
+				val dsSql = dataStore.asInstanceOf[SqlStore]
+				val tableSql = table.asInstanceOf[SqlTable]
+				dsSql.createTableAs(tableSql.schema, tableSql.name, src.query)
+			}
+			case src: EtlSource => src.processOnDataStore(this, dataStore, table) foreach { source =>
+				val sink = table.write()
+				overseer.runJob(source, sink)	  
+			}
 		}
 	}
 

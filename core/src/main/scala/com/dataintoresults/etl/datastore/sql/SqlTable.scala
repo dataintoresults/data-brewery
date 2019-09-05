@@ -55,7 +55,7 @@ class SqlTable extends EtlTable with Table {
 	
 	def canWrite = true
 	
-	def write() : DataSink = throw new RuntimeException("You cannot write to this SQL table.")
+	def write() : DataSink = store.createDataSink(this)
 	
 	
   def dropTableIfExists() : Table = {

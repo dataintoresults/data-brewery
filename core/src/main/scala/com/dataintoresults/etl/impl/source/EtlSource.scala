@@ -62,8 +62,15 @@ class SourceQuery extends EtlSource {
 
   override def processOnModule(etl: EtlImpl, toModule: Module, toTable: Table) = Some(query)
   
-  override def processOnDataStore(etl: EtlImpl, ds: DataStore, dsTable: Table): Option[DataSource] =
-    throw new RuntimeException("Processing a data store table with a query source is not supported yet.")
+  override def processOnDataStore(etl: EtlImpl, ds: DataStore, dsTable: Table): Option[DataSource] = {
+    // Check that the datas tore is SQL compliant
+    if(!ds.isInstanceOf[SqlStore])
+      throw new RuntimeException(s"The data store ${ds.name} is not able to process SQL queries.")
+
+    val sqlDs = ds.asInstanceOf[SqlStore]
+	    
+    sqlDs.createDataSource(query)	    
+  }
 }
 
 class SourceScript extends EtlSource {  

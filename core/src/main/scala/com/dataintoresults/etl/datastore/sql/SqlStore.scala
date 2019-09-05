@@ -141,7 +141,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 			// Find columns 
 			val result = new ResultSetTraversable(databaseMetaData.getColumns(null, schema, table, null));
 			
-			logger.debug("Request metadata from : " + schema + "." + table)
+			logger.debug("Request metadata from : " + sqlTablePath(schema, name))
 			
 
 			
@@ -149,7 +149,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 			  new ColumnBasic(row.string(4), jdbcType2EtlType(row.int(5), row.intOpt(7) getOrElse 0))  }
   			
 			if(columns.isEmpty) {
-			  throw new RuntimeException(s"No table ${schema}.${table} in the datastore ${this.name}. Can't get definition from the datastore.");
+			  throw new RuntimeException(s"No table ${sqlTablePath(schema, name)} in the datastore ${this.name}. Can't get definition from the datastore.");
 			}	
 			
 			new SqlTable(this, table, schema, columns.toSeq)  		
@@ -201,7 +201,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
     // Postgresql hack, if not set, fetchSize is not taken into account.
     db.conn.setAutoCommit(false)
       
-    logger.info(s"SqlStore: Opening a data sink to ${this.name}.${schema}.${name}")
+    logger.info(s"SqlStore: Opening a data sink to ${this.name}.${sqlTablePath(schema, name)}")
     
     val query = "insert into " + schema + "." + name + 
       "(" + ( columns map { columnEscapeStart + _.name + columnEscapeEnd } mkString ", ") + ")" + 
@@ -238,7 +238,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 		  }
 		  
 		  def close() = {		    
-        logger.info(s"SqlStore: Closing a data sink to ${dsName}.${schema}.${name} (${nbRows} inserted)")
+        logger.info(s"SqlStore: Closing a data sink to ${dsName}.${sqlTablePath(schema, name)} (${nbRows} inserted)")
 		    // Add a last execute batch in case the last put did not trigger an executeBatch
 		    stmt.executeBatch()
 		    stmt.close()
@@ -409,7 +409,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 
   def createTable(schema: String, name: String, columns: Seq[Column]) : Unit = {
     withDBLocalSession { session => 
-      val query = s"create table " + schema + "." + name + "(" +
+      val query = s"create table " + sqlTablePath(schema, name) + "(" +
         (columns map { c => columnEscapeStart + c.name + columnEscapeEnd + " " + convertToSqlType(c.colType) } mkString ", ") + 
         ")";
 			logger.info(s"Create table with definition :  $query")
@@ -419,7 +419,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   
   def createTableAs(schema: String, name: String, query: String) : Unit = {
     withDBLocalSession { session => 
-      val cta = s"create table " + schema + "." + name + " as " + query;
+      val cta = s"create table " + sqlTablePath(schema, name) + " as " + query;
       logger.info(s"Create table with select : $cta")
  			session.execute(cta)
 		}
@@ -465,8 +465,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
                 n.${columnEscapeStart}${col.name}${columnEscapeEnd} end as ${columnEscapeStart}${col.name}${columnEscapeEnd},""" } mkString "" }
                 coalesce(o.${columnEscapeStart}create_timestamp${columnEscapeEnd}, n.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}create_timestamp${columnEscapeEnd},  
                 coalesce(n.${columnEscapeStart}update_timestamp${columnEscapeEnd}, o.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}update_timestamp${columnEscapeEnd}
-              from ${schema}.${table}_old o
-              full outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${schema}.${table}_new) n
+              from ${sqlTablePath(schema, name)}_old o
+              full outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, name)}_new) n
               on ${keys map { col => s" o.${columnEscapeStart}${col}${columnEscapeEnd} = n.${columnEscapeStart}${col}${columnEscapeEnd}  " } mkString " and " }
               """
               
@@ -480,8 +480,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
                 n.${columnEscapeStart}${col.name}${columnEscapeEnd} end as ${columnEscapeStart}${col.name}${columnEscapeEnd},""" } mkString "" }
                 coalesce(o.${columnEscapeStart}create_timestamp${columnEscapeEnd}, n.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}create_timestamp${columnEscapeEnd},  
                 coalesce(n.${columnEscapeStart}update_timestamp${columnEscapeEnd}, o.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}update_timestamp${columnEscapeEnd}
-              from ${schema}.${table}_old o
-              left outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${schema}.${table}_new) n
+              from ${sqlTablePath(schema, name)}_old o
+              left outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, name)}_new) n
               on ${keys map { col => s" o.${columnEscapeStart}${col}${columnEscapeEnd} = n.${columnEscapeStart}${col}${columnEscapeEnd} " } mkString " and " }
               union all 
               select 
@@ -492,8 +492,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
                 n.${columnEscapeStart}${col.name}${columnEscapeEnd} end as ${columnEscapeStart}${col.name}${columnEscapeEnd},""" } mkString "" }
                 coalesce(o.${columnEscapeStart}create_timestamp${columnEscapeEnd}, n.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}create_timestamp${columnEscapeEnd},  
                 coalesce(n.${columnEscapeStart}update_timestamp${columnEscapeEnd}, o.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}update_timestamp ${columnEscapeEnd}
-              from ${schema}.${table}_old o
-              right outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${schema}.${table}_new) n
+              from ${sqlTablePath(schema, name)}_old o
+              right outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, name)}_new) n
               on ${keys map { col => s" o.${columnEscapeStart}${col}${columnEscapeEnd} = n.${columnEscapeStart}${col}${columnEscapeEnd} " } mkString " and " }
               where n.${columnEscapeStart}update_timestamp${columnEscapeEnd} is not null and o.${columnEscapeStart}create_timestamp${columnEscapeEnd} is null
               """
