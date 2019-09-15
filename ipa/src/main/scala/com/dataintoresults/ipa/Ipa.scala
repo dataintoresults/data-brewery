@@ -19,9 +19,12 @@
 package com.dataintoresults.ipa
 
 import java.io._
+import java.nio.file.{Paths, Files, FileSystems}
 import java.util.UUID.randomUUID
 import java.util.Properties
-
+import java.util.Collections
+import java.net.URI
+import java.util.regex.Pattern
 
 import scala.concurrent.duration._
 import scala.xml.XML
@@ -61,6 +64,9 @@ case class CliConfig(
   conf: Seq[File] = Seq(new File("dw.conf")),
   logLevel: Int = 0,
   
+  // For init
+  seed: String = "simple",
+
   // For read 
   readPath: Option[String] = None,
   nbRows: Option[Int] = Some(10),
@@ -94,7 +100,7 @@ object Ipa {
     val etl = new EtlImpl(globalConfig)
     
     logger.info(s"Loading datawarehouse file ${cliConfig.dw} ...")
-    etl.load(XML.loadFile(cliConfig.dw))
+    etl.load(cliConfig.dw.toPath) 
         
     val dw = etl.dataWarehouse
     
@@ -127,6 +133,11 @@ object Ipa {
        LoggerFactory.getLogger("com.dataintoresults").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
        LoggerFactory.getLogger("com.dataintoresults.ipa").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.OFF)
      }
+     else if(cliConfig.logLevel > 5) {
+       LoggerFactory.getLogger("play").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.INFO)
+       LoggerFactory.getLogger("com.dataintoresults").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.DEBUG)
+       LoggerFactory.getLogger("com.dataintoresults.ipa").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.DEBUG)
+     }
      else if(cliConfig.logLevel > 0) {
        LoggerFactory.getLogger("play").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.INFO)
        LoggerFactory.getLogger("com.dataintoresults").asInstanceOf[ch.qos.logback.classic.Logger].setLevel(Level.INFO)
@@ -156,27 +167,90 @@ object Ipa {
     if(watcherUrl == null || watcherUrl.equals("none"))
       return
 
-     implicit val system = ActorSystem()
-     implicit val materializer = ActorMaterializer()
-     val ws = StandaloneAhcWSClient()
-     val postedData = s"command=$command&uuid=$uuid&stage=$stage&version=${Ipa.programVersion+"-"+Ipa.programDate}&" + 
-       s"nbds=${nbDs}&nbmod=${nbMod}&dstypes=${distDs}"
+    implicit val system = ActorSystem()
+    implicit val materializer = ActorMaterializer()
+    val ws = StandaloneAhcWSClient()
+    val postedData = s"command=$command&uuid=$uuid&stage=$stage&version=${Ipa.programVersion+"-"+Ipa.programDate}&" + 
+      s"nbds=${nbDs}&nbmod=${nbMod}&dstypes=${distDs}"
      
-     if(globalConfig.getBoolean("ipa.showPostedData"))
-       logger.info(s"Sending $postedData to $watcherUrl")
-     else 
-       logger.debug(s"Sending $postedData to $watcherUrl")
+    if(globalConfig.getBoolean("ipa.showPostedData"))
+      logger.info(s"Sending $postedData to $watcherUrl")
+    else 
+      logger.debug(s"Sending $postedData to $watcherUrl")
      
-     val response = ws.url(watcherUrl)
-       .withHttpHeaders("Content-type" -> "application/x-www-form-urlencoded")
-       .post(postedData).map { response =>
-       logger.debug("Response from server : " + response.body)
-       ws.close()
-       system.terminate()
-     }
-   }
-  
-   
+    val response = ws.url(watcherUrl)
+      .withHttpHeaders("Content-type" -> "application/x-www-form-urlencoded")
+      .post(postedData).map { response =>
+      logger.debug("Response from server : " + response.body)
+      ws.close()
+      system.terminate()
+    }
+  }
+
+  // For some reasons, Path.relative doesn't works weel in jars.
+  // Therefore, this is a custom way
+  private def relativePathForSeeds(base: String, file: String) : String = {
+    val v1 = file.toString.replaceFirst(Pattern.quote(base.toString()), "")
+    if(v1 != "") 
+      v1.substring(1)
+    else 
+      v1
+  }
+
+  def init(cliConfig: CliConfig): Unit = {
+    val seeds = Seq("simple", "complex")
+    if(!seeds.contains(cliConfig.seed)) {
+      logger.error(s"Seed should be one of : ${seeds.mkString(",")}.")
+    } 
+    else {
+      logger.info(s"Creating a seed (type ${cliConfig.seed}) in the current directory.")
+      val seedUri = getClass().getResource("/seeds/"+cliConfig.seed).toURI() 
+      // If it's a jar, we need to manually create a filesystem for it
+      val seedPath = if(seedUri.getScheme() == "jar") {
+        val splitUri = seedUri.toString().split("!")
+        // We somehow forgot to close the filesystem, it shouldn't be a big issue.
+        val fs = FileSystems.newFileSystem(URI.create(splitUri(0)), Collections.emptyMap[String, String]());
+        fs.getPath(splitUri(1));
+      }
+      else {
+        Paths.get(seedUri)
+      }
+      
+      // we will copy the seed in the current directory 
+      val dest = Paths.get("")
+
+      var nbFiles = 0
+      var nbDirectories = 0
+
+      // The "placeholer" filter is needed because sbt will not copy empty directories in the output jar
+      // Therefore we add "placeholder" files in empty directories
+      Files.walk(seedPath)
+        .skip(1) // Skip the first one as it is the current path
+        .filter(!_.endsWith("placeholder"))
+        .forEach(s => {
+        val d = Paths.get(dest.toString + relativePathForSeeds(seedPath.toString, s.toString))
+        if( Files.isDirectory(s) ) {
+          if( !Files.exists(d) ) {
+            Files.createDirectory(d)
+            nbFiles += 1
+          }
+          else
+            logger.info(s"Directory ${d} already exists. Skipping.")
+        }
+        else {
+          if( !Files.exists(d) ) {
+            Files.copy(s, d)
+            nbFiles += 1
+          }
+          else
+            logger.info(s"File ${d} already exists. Skipping.")
+        }
+      })
+
+      logger.info(s"Seed ${cliConfig.seed} created. $nbFiles files and $nbDirectories directories created.")
+    }
+  }
+
   def read(cliConfig: CliConfig): Unit = {
     process(cliConfig) { etl =>       
       val pathArray = cliConfig.readPath.get.split("\\.")
@@ -250,8 +324,21 @@ object Ipa {
     opt[Unit]('v', "verbose").action( (_, c) => c.copy(logLevel = 1) ).
       text("Display more logging messages.")
 
+    opt[Unit]('V', "very-verbose").action( (_, c) => c.copy(logLevel = 10) ).
+      text("Display even more logging messages.")
+  
+
     help("help").text("prints this usage text")
   
+    note("")
+    
+    cmd("init").action( (_, c) => c.copy(command = Some("init")) ).
+      text("init create a new data projet.").
+      children(
+        arg[String]("<seed>").optional().action( (x, c) =>
+          c.copy(seed = x)).text("Optionnal : Use a seed to base project (accept : simple, complex)")
+      )
+
     note("")
   
     cmd("read").action( (_, c) => c.copy(command = Some("read")) ).
@@ -295,6 +382,7 @@ object Ipa {
           case Some("read") => read(cliConfig)
           case Some("run-module") => runModule(cliConfig)
           case Some("run-datastore") => runDatastore(cliConfig)
+          case Some("init") => init(cliConfig)
           case _ => parser.showUsage()
         }
         
