@@ -166,10 +166,12 @@ class EtlParameter[T: EtlParameterType](
 
     _value = Seq(givenValue, configValue, cdataValue, nodeValue, defaultValue).collectFirst{ case Some(d) => d }
 
-    if(_value == None)
-      throw new RuntimeException(s"No value for parameter $nodeAttribute $context") 
-  }
+    if(_value == None) {
+      val nodeContext = node.map(n => s" for node ${n.label}").getOrElse("")
+      throw new RuntimeException(s"No value for parameter ${nodeAttribute.getOrElse("missing")} $nodeContext. $context") 
+    }
 
+  }
 }
 
 

@@ -64,6 +64,12 @@ class MsSqlStore extends SqlStore {
 	
 	override def columnEscapeStart = "[" 
 	override def columnEscapeEnd = "]" 
+	
+	override def tableEscapeStart = "[" 
+  override def tableEscapeEnd = "]" 
+  
+	override def schemaEscapeStart = "[" 
+	override def schemaEscapeEnd = "]" 
 }
 
 object MsSqlStore {

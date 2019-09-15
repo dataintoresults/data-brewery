@@ -98,7 +98,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	private def loadPath(path: Path): scala.xml.Node = {
 		val xml = XML.loadFile(path.toString)
 
-		val parentPath = path.getParent()
+		val parentPath = path.toAbsolutePath.getParent()
 
     val includes = new RewriteRule {
       override def transform(n: Node): Seq[Node] = n match {
@@ -119,8 +119,12 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 							.map( path => loadPath(parentPath.resolve(path))) // load XML
 							.toSeq
 					}
-					else 
+					else {
+						if(parentPath.resolve(includePath) == null) {
+							throw new RuntimeException(s"Can't find $includePath inside directory $parentPath")
+						}
 						loadPath(parentPath.resolve(includePath))
+					}
 				}
 				case e: Elem if e.attribute("contentPath").isDefined => {
 					val contentPath = e \@ "contentPath"

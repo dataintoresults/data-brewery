@@ -53,8 +53,9 @@ class H2Store extends SqlStore {
 	
  	override def defaultDatabase = "~/h2db"
 	 
+	private def hostAndDatabase : String = if(host.contains(":")) s"$host$database" else s"$host:$database"
 
-	def createJdbcUrl(host: String, port: String, database: String) : String = s"jdbc:h2:${host}:${database}"
+	def createJdbcUrl(host: String, port: String, database: String) : String = s"jdbc:h2:$hostAndDatabase"
 	
  	override def toString = s"H2Store[${name},${host},${user},${password}]"
 

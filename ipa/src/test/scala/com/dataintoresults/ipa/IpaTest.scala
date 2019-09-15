@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (C) 2018 by Obsidian SAS : https://dataintoresults.com/
+ * Copyright (C) 2019 by Obsidian SAS : https://dataintoresults.com/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,33 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.util
+package com.dataintoresults.ipa
 
-object Using {
-  def using[Closable <: { def close() }, Result](closable: Closable)(f: Closable => Result) = {
-    try {
-      f(closable)
-    } finally {
-      if (closable != null) closable.close() 
-    }
-  }
+import scala.xml.XML
+
+import java.io.StringReader
+import java.time.{LocalDate, LocalDateTime}
+import java.nio.file.{Files, Paths} 
+import java.nio.charset.Charset
+import scala.math.BigDecimal
+
+import org.apache.commons.io.FileUtils
+
+import org.scalatest.FunSuite
+import org.scalatest.Assertions._
+import com.dataintoresults.etl.util.EtlHelper
+import com.dataintoresults.etl.datastore.sql.SqlStore
+import java.nio.file.FileSystems
+
+
+class IpaTest extends FunSuite { 
+  test("Ipa can init a project") {
+		// Delete 
+
+		// Run ipa init
+		Ipa.main(Array("init", "complex"))
+
+		// Check the presence of a dw.xml file
+		
+	}
 }
-

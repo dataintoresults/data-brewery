@@ -168,11 +168,11 @@ class EtlImplTest extends FunSuite {
 
 		//
 		assertResult("A, B, C\n1, 2, 1", "Check module processing") {
-			EtlHelper.printDataset(etl.runQuery("dw", "select * from business.d_date"))
+			EtlHelper.printDataset(etl.runQuery("dw", "select * from \"business\".\"d_date\""))
 		}
 
 		assertResult("A, B, C\n2, 2, 1", "Check datastore processing") {
-			EtlHelper.printDataset(etl.runQuery("dw", "select * from test"))
+			EtlHelper.printDataset(etl.runQuery("dw", "select * from \"test\""))
 		}
 
 

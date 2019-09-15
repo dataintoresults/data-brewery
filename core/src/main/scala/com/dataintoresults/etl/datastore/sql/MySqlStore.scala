@@ -18,20 +18,34 @@
 
 package com.dataintoresults.etl.datastore.sql
 
+import java.sql.DriverManager;
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.Statement
+import java.sql.ResultSet
+import java.sql.ResultSetMetaData
+
+import scalikejdbc._
+
 import com.typesafe.config.Config
+
+import play.api.Logger
 
 import com.dataintoresults.etl.core.DataStore
 import com.dataintoresults.etl.core.Etl
 import com.dataintoresults.etl.core.Table
 
 import com.dataintoresults.etl.impl.EtlImpl
+import com.dataintoresults.etl.impl.ColumnBasic
 
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
 
 class MySqlStore extends SqlStore {	
+	private val logger: Logger = Logger(this.getClass())
+	
  	def sqlType = "mysql"
-	def jdbcDriver : String = "com.mysql.jdbc.Driver"
+	def jdbcDriver : String = "com.mysql.cj.jdbc.Driver"
 	def jdbcUrl : String = createJdbcUrl(host, port, database)
 	
 	
@@ -63,10 +77,65 @@ class MySqlStore extends SqlStore {
 	
 	override def columnEscapeStart = "`" 
 	override def columnEscapeEnd = "`" 
+
+	
+	override def tableEscapeStart = "`" 
+  override def tableEscapeEnd = "`"
+  
+	override def schemaEscapeStart = "`" 
+	override def schemaEscapeEnd = "`" 
+
+	 
+	/*
+	 * Need to overload as MySQl take schema as a first parameter
+	 */
+	override def getTableFromDatabaseMetaData(schema: String, table: String) : Table = {
+    withDB { db =>
+			val databaseMetaData = db.conn.getMetaData();
+			
+			// Find columns 
+			val result = new ResultSetTraversable(databaseMetaData.getColumns(schema, null, table, null));
+			
+			logger.debug("Request metadata from : " + sqlTablePath(schema, table))
+			
+			val columns = result map { row =>
+			  new ColumnBasic(row.string(4), jdbcType2EtlType(row.int(5), row.intOpt(7) getOrElse 0))  }
+  			
+			if(columns.isEmpty) {
+			  throw new RuntimeException(s"No table ${sqlTablePath(schema, table)} in the datastore ${this.name}. Can't get definition from the datastore.");
+			}	
+			
+			new SqlTable(this, table, schema, columns.toSeq)  		
+    }
+	}
+	
+	 
+	/*
+	 * Need to overload as MySQl take schema as a first parameter
+	 */
+	override def getTablesFromDatabaseMetaData(schema: String) : Seq[String] = {       
+    withDB { db =>
+      // Access to the metadata of the JDBC connection
+			val databaseMetaData = db.conn.getMetaData();
+			
+			// Find tables 
+			val result = new ResultSetTraversable(databaseMetaData.getTables(schema, null, "%", Array("TABLE")));
+			       
+			// Column 3 contains the table names 
+			val tables = result map { _.string(3) }
+			
+			val res = tables.toSeq
+			
+			logger.debug(s"Discovery from schema $schema (datastore $name) returned tables : ${res.mkString(", ")}")
+
+			res
+    }
+	}
+
 }
 
 object MySqlStore {
-	def fromXml(dsXml: scala.xml.Node, config: com.typesafe.config.Config) : DataStore = {
+	def fromXml(dsXml: scala.xml.Node, config: com.typesafe.config.Config) : MySqlStore = {
 		val store = new MySqlStore()
 		store.parse(dsXml, config)
 		store

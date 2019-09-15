@@ -1,14 +1,14 @@
 
 libraryDependencies ++= Seq( 
-  "com.typesafe.play" %% "play-json" % "2.6.0",
-  "com.typesafe.play" %% "anorm" % "2.5.3",
-  "org.slf4j" % "slf4j-api" % "1.7.25",
+  "com.typesafe.play" %% "play-json" % "2.7.3",
+  "org.playframework.anorm" %% "anorm" % "2.6.4",
+  "org.slf4j" % "slf4j-api" % "1.7.28",
   
   // Access to data sources
   "org.scalikejdbc" %% "scalikejdbc" % "2.5.1",
   "org.postgresql" % "postgresql" % "42.2.5",
-  "mysql" % "mysql-connector-java" % "5.1.40",
-  "com.h2database" % "h2" % "1.4.197",
+  "mysql" % "mysql-connector-java" % "8.0.17",
+  "com.h2database" % "h2" % "1.4.199",
   "com.microsoft.sqlserver" % "mssql-jdbc" % "6.4.0.jre8",
   "org.mongodb.scala" %% "mongo-scala-driver" % "2.2.1",
   
@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
   
   "fr.janalyse"   %%  "janalyse-ssh" % "0.10.3" % "compile",
   
-  "com.typesafe.play" %% "play-mailer" % "6.0.1",
+  "com.typesafe.play" %% "play-mailer" % "7.0.1",
   "org.mindrot" % "jbcrypt" % "0.3m",
   "org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1",
   "com.github.nscala-time" %% "nscala-time" % "2.18.0",
@@ -51,10 +51,10 @@ libraryDependencies ++= Seq(
   
   
   "ch.qos.logback" % "logback-classic" % "1.2.3",
-  "com.typesafe.play" %% "play-logback" % "2.6.11",
+  "com.typesafe.play" %% "play-logback" % "2.7.3",
   
-  "com.typesafe.play" %% "play-ahc-ws-standalone" % "2.0.6",
-  "com.typesafe.play" %% "play-ws-standalone-json" % "2.0.6"
+  "com.typesafe.play" %% "play-ahc-ws-standalone" % "2.0.7",
+  "com.typesafe.play" %% "play-ws-standalone-json" % "2.0.7"
 
 
 )

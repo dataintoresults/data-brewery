@@ -39,6 +39,8 @@ object EtlHelper {
     sb append "\n"
         
     dataSource.foreach { row => sb append ( (row map { c => c toString()} mkString ", " )  + "\n") }
+
+    dataSource.close() 
     
     sb.toString()    
   }

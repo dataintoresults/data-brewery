@@ -59,7 +59,7 @@ class GoogleAnalyticsStore extends EtlDatastore with DataStore {
 
 	private val _serviceAccountEmail = EtlParameter[String](nodeAttribute="serviceAccountEmail", configAttribute="dw.datastore."+name+".serviceAccountEmail")
 	private val _keyFileLocation = EtlParameter[String](nodeAttribute="keyFileLocation", configAttribute="dw.datastore."+name+".keyFileLocation")
-	private val _applicationName = EtlParameter[String](nodeAttribute="applicationName", configAttribute="dw.datastore."+name+".applicationName")
+	private val _applicationName = EtlParameter[String](nodeAttribute="applicationName", configAttribute="dw.datastore."+name+".applicationName", defaultValue="Data Brewery")
 	private val _viewId = EtlParameter[String](nodeAttribute="viewId", configAttribute="dw.datastore."+name+".viewId")
 
 	def serviceAccountEmail = _serviceAccountEmail.value

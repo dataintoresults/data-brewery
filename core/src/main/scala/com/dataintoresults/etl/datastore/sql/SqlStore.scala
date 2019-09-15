@@ -72,7 +72,13 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 	
 	
 	def columnEscapeStart = "\"" 
-	def columnEscapeEnd = "\"" 
+  def columnEscapeEnd = "\"" 
+  
+	def tableEscapeStart = "\"" 
+  def tableEscapeEnd = "\"" 
+  
+	def schemaEscapeStart = "\"" 
+	def schemaEscapeEnd = "\"" 
 	 	
 
  	
@@ -117,7 +123,12 @@ abstract class SqlStore extends EtlDatastore with DataStore {
  	def sshPrivateKeyLocation = _sshPrivateKeyLocation.value
  	def sshPrivateKeyPassphrase = _sshPrivateKeyPassphrase.value
 
-  def tables = _tables ++ _autoDiscoveryTables
+  def tables = {
+    // If there is a auto discovery, make sure we check for tables (by opening a connection)
+    if(_connectionPool.isEmpty && _autoDiscovery.size > 0) 
+      open()
+    _tables ++ _autoDiscoveryTables
+  }
  	private var _autoDiscoveryTables : Seq[Table] = Nil
  	
  	private var sshLocalPort : Int = _
@@ -141,15 +152,13 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 			// Find columns 
 			val result = new ResultSetTraversable(databaseMetaData.getColumns(null, schema, table, null));
 			
-			logger.debug("Request metadata from : " + sqlTablePath(schema, name))
-			
-
-			
+			logger.debug("Request metadata from : " + sqlTablePath(schema, table))
+						
 			val columns = result map { row =>
 			  new ColumnBasic(row.string(4), jdbcType2EtlType(row.int(5), row.intOpt(7) getOrElse 0))  }
   			
 			if(columns.isEmpty) {
-			  throw new RuntimeException(s"No table ${sqlTablePath(schema, name)} in the datastore ${this.name}. Can't get definition from the datastore.");
+			  throw new RuntimeException(s"No table ${sqlTablePath(schema, table)} in the datastore ${this.name}. Can't get definition from the datastore.");
 			}	
 			
 			new SqlTable(this, table, schema, columns.toSeq)  		
@@ -165,10 +174,14 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 			// Find tables 
 			val result = new ResultSetTraversable(databaseMetaData.getTables(null, schema, null, Array("TABLE")));
 			
-			// Column 3 contains the table names
-			val columns = result map { _.string(3) }
-  			
-			columns.toSeq
+			// Column 3 contains the table names 
+			val tables = result map { _.string(3) }
+			
+			val res = tables.toSeq
+			
+			logger.debug(s"Discovery from schema $schema (datastore $name) returned tables : ${res.mkString(", ")}")
+
+			res
     }
 	}
 		
@@ -181,7 +194,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 			// Find tables 
 			val result = new ResultSetTraversable(databaseMetaData.getSchemas());
 			
-			// Column 3 contains the schema names
+			// Column 2 contains schema
 			val columns = result map { _.string(1) }
   			
 			columns.toSeq
@@ -203,7 +216,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
       
     logger.info(s"SqlStore: Opening a data sink to ${this.name}.${sqlTablePath(schema, name)}")
     
-    val query = "insert into " + schema + "." + name + 
+    val query = "insert into " + sqlTablePath(schema, name) + 
       "(" + ( columns map { columnEscapeStart + _.name + columnEscapeEnd } mkString ", ") + ")" + 
       " values (" + ( columns map { _ => "?" } mkString ", " ) +")";
 
@@ -351,11 +364,11 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 		}
 	}
 
-  private def sqlTablePath(schema: String, name: String): String = {
+  protected def sqlTablePath(schema: String, name: String): String = {
     schema match {
-      case "" => name
-      case null => name
-      case _ => schema + "." + name
+      case "" => tableEscapeStart + name + tableEscapeEnd
+      case null => tableEscapeStart + name + tableEscapeEnd
+      case _ => schemaEscapeStart + schema + schemaEscapeEnd + "." + tableEscapeStart + name + tableEscapeEnd
     }
   }
 	
@@ -379,7 +392,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 
   def dropSchemaIfExists(schema: String) : Unit = {
     withDBLocalSession { session => 
-      val query = s"drop schema if exists $schema"    			
+      val query = s"drop schema if exists $schemaEscapeStart$schema$schemaEscapeEnd"    			
 			session.execute(query)
 		}
   }
@@ -387,7 +400,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   
   def renameTable(schema: String, oldName: String, newName: String) : Unit = {
     withDBLocalSession { session => 
-      val query = s"alter table ${sqlTablePath(schema, oldName)} rename to ${newName}";     			
+      val query = s"alter table ${sqlTablePath(schema, oldName)} rename to $tableEscapeStart$newName$tableEscapeEnd";     			
 			session.execute(query)
 		}
   }  
@@ -430,7 +443,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
    */
   def createSchema(schema: String) : Unit = {
     withDBLocalSession { session => 
-      val cta = s"create schema if not exists $schema";
+      val cta = s"create schema if not exists $schemaEscapeStart$schema$schemaEscapeEnd";
  			session.execute(cta)
 		}
   }
@@ -518,7 +531,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   /*
    * Fill _autoDiscoveryTables with schema listed in _autoDiscovery
    */
-  private def discoverTables() : Unit = {
+  def discoverTables() : Unit = {
     _autoDiscoveryTables = _autoDiscovery flatMap { autoDisc =>
       getTablesFromDatabaseMetaData(autoDisc.schema) map { table =>
         getTableFromDatabaseMetaData(autoDisc.schema, table)
@@ -528,11 +541,11 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   
   
   
-  protected def open() : Unit = {
+  def open() : Unit = {
     if(_connectionPool.isDefined) {
       close()
     }
-    
+
     // SSH Tunnel if needed
     if(sshPassword != "" ) {
       try {
@@ -589,9 +602,10 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   }
   
 	def close() : Unit = {
-    _connectionPool foreach { 
+    //println(s"close $name")
+    _connectionPool foreach { pool =>
       logger.info(s"SqlStore: Closing connection to datastore ${name}")
-      _.close() 
+      pool.close() 
     }
     _connectionPool = None
     _ssh foreach { _.close() }
@@ -600,7 +614,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   
     
   final protected def withDB[A](f: DB => A): A = {
-    using(DB(connectionPool.getConnection()))(f)
+    using(getDB())(f)
   }
   
   final protected def getDB(): DB = {
