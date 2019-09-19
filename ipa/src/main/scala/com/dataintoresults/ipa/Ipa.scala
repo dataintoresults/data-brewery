@@ -77,6 +77,9 @@ case class CliConfig(
   
   // For run-datastore
   datastore: Option[String] = None,
+
+  // For run-process
+  process: Option[String] = None,
 )
   
   
@@ -306,6 +309,31 @@ object Ipa {
       etl.runDataStore(cliConfig.datastore.get)
     }
   }
+
+  def runProcess(cliConfig: CliConfig): Unit = {
+    process(cliConfig) { etl =>  
+      etl.subscribe(new Subscriber[JsObject, Publisher[JsObject]] {
+        override def notify(pub: Publisher[JsObject], event: JsObject) = {
+          val process = (event \ "process").asOpt[String]
+          val module = (event \ "module").asOpt[String]
+          val datastore = (event \ "datastore").asOpt[String]
+          val step = (event \ "step").asOpt[String]
+          if(process.isDefined && step.isDefined)
+            logger.info(process.get + " : " + step.get + " " + module.getOrElse(datastore.getOrElse("")))
+          else if(module.isDefined && step.isDefined)
+            logger.info(module.get + " : " + step.get)
+        }
+      })
+      
+      cliConfig.process.foreach { process =>         
+        val startTime = System.currentTimeMillis()
+        logger.info("Launching process " + process + " ...")
+        etl.runProcess(process)
+        logger.info("Process " + process + " took " + 
+            PeriodFormat.getDefault().print(new Period(System.currentTimeMillis() - startTime) ))
+      }
+    }
+  }
   
   val parser = new scopt.OptionParser[CliConfig]("ipa") {
     head(programName, programVersion, programDate)
@@ -369,6 +397,14 @@ object Ipa {
         arg[String]("<datastore>").required().action( (x, c) =>
           c.copy(datastore = Some(x)) ).text("the datastore to be processed (required)")
       )
+    note("")
+      
+    cmd("run-process").action( (_, c) => c.copy(command = Some("run-process")) ).
+      text("run-process launch the specified process.").
+      children(
+        arg[String]("<process>").required().action( (x, c) =>
+          c.copy(process = Some(x)) ).text("the process to be launched (required)")
+      )
       
     
   }
@@ -382,6 +418,7 @@ object Ipa {
           case Some("read") => read(cliConfig)
           case Some("run-module") => runModule(cliConfig)
           case Some("run-datastore") => runDatastore(cliConfig)
+          case Some("run-process") => runProcess(cliConfig)
           case Some("init") => init(cliConfig)
           case _ => parser.showUsage()
         }
