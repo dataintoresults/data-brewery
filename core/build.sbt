@@ -14,6 +14,9 @@ libraryDependencies ++= Seq(
   
   "commons-io" % "commons-io" % "2.6",
 
+  // Parser
+  "com.lihaoyi" %% "fastparse" % "2.1.3",
+
   // CSV stuff 
   "com.univocity" %  "univocity-parsers" % "2.7.6",
 

@@ -20,8 +20,10 @@ package com.dataintoresults.etl.core
 
 /**
  * Represents a source of data.
+ * It should close automatically when the last next() is called.
+ * Can be parsed only once.
  */
-trait DataSource {  
+trait DataSource extends Iterator[Seq[Any]] {  
 	/**
 	 * Returns the structure of the underlying data.
 	 */
@@ -41,17 +43,7 @@ trait DataSource {
 	
 	/**
 	 * Close this data source and release eventual resources taken.
-	 * It is no longer possuble to read data after this call.
+	 * It is no longer possible to read data after this call.
 	 */
 	def close() : Unit
-	
-	/**
-	 * Apply a lambda to every rows in this data source.
-	 * It closes the data source at the end.
-	 */
-	def foreach[B](f: Seq[Any] => B) : Unit = {
-	  while(hasNext())
-	    f(next())
-		close()
-	}
 }

@@ -40,6 +40,11 @@ trait DataSet {
   def rows : Seq[Seq[Any]]
 
   /**
+   * Returns the number of rows of this dataset.
+   */
+  def size = rows.size
+
+  /**
    * Convert the dataset to a data source.
    */
   def toDataSource: DataSource = new DataSource {      

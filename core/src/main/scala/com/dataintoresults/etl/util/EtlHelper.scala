@@ -23,6 +23,7 @@ import play.api.libs.json._
 import com.dataintoresults.etl.core.Column
 import com.dataintoresults.etl.core.DataSet
 import com.dataintoresults.etl.core.DataSource
+import com.dataintoresults.etl.impl.DataSetImpl
 
 object EtlHelper {
   def printDataset(dataset: DataSet) : String = {
@@ -38,13 +39,26 @@ object EtlHelper {
     val sb = new StringBuffer(header)
     sb append "\n"
         
-    dataSource.foreach { row => sb append ( (row map { c => c toString()} mkString ", " )  + "\n") }
+    dataSource.foreach { row => 
+      sb.append (row.map({ c: Any => 
+        c match {
+          case null => ""
+          case _ => c.toString()}
+        }).mkString(", ")
+        + "\n") 
+    }
 
     dataSource.close() 
     
     sb.toString()    
   }
   
+  def dataSourceToDataset(ds: DataSource) : DataSet = {
+    val structure = ds.structure
+    val content = ds.map(x => x).toSeq
+    new DataSetImpl(structure, content)
+  }
+
   def datasetToXml(dataset: DataSet) : scala.xml.Node = {
     val result = <dataset>
 				<header>

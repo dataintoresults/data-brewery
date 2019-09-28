@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.impl
 
 import java.io.StringReader
 import java.time.{LocalDate, LocalDateTime}
@@ -25,7 +25,6 @@ import scala.math.BigDecimal
 import org.scalatest.FunSuite
 import org.scalatest.Assertions._
 
-import com.dataintoresults.etl.impl.ColumnBasic
 
 class ColumnBasicTest extends FunSuite {
   
