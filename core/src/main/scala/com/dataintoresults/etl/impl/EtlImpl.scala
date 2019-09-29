@@ -49,6 +49,7 @@ import com.dataintoresults.etl.datastore.hubspot.HubspotStore
 import com.dataintoresults.etl.datastore.googleSearchConsole.GoogleSearchStore
 import com.dataintoresults.etl.datastore.mongodb.MongoDbStore
 import com.dataintoresults.etl.datastore.http.HttpStore
+import com.dataintoresults.etl.datastore.bitmovin.BitmovinStore
 import com.dataintoresults.etl.explorer._
 import scala.xml.XML
 import scala.collection.JavaConverters._
@@ -598,6 +599,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 			case "odoo" => OdooStore.fromXml(dsXml, config)
 			case "hubspot" => HubspotStore.fromXml(dsXml, config)
 			case "h2" => H2Store.fromXml(config, this, dsXml)
+			case "bitmovin" => BitmovinStore.fromXml(dsXml, config)
 			// Finally maybe there is a specific data store factory registered
 			case dsType: String =>  dataStoreFactories.get(dsType) match {
         case Some(factory) => factory(dsXml, this)
