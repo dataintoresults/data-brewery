@@ -487,26 +487,26 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   def queryMergeNewOldNoFullJoin(table: String, schema: String, columns: Seq[Column], keys: Seq[String]): String = s"""
               select 
                 case when o.${columnEscapeStart}${table}_key${columnEscapeEnd} is null 
-                  then (select coalesce(max(${columnEscapeStart}${table}_key${columnEscapeEnd}),0) from ${schema}.${table}_old) + row_number() over () 
+                  then (select coalesce(max(${columnEscapeStart}${table}_key${columnEscapeEnd}),0) from ${sqlTablePath(schema, table+"_old")}) + row_number() over () 
                   else o.${columnEscapeStart}${table}_key${columnEscapeEnd} end as ${columnEscapeStart}${table}_key${columnEscapeEnd},  
                 ${columns map { col => s"""case when n.${columnEscapeStart}update_timestamp${columnEscapeEnd} is null then o.${columnEscapeStart}${col.name}${columnEscapeEnd} else 
                 n.${columnEscapeStart}${col.name}${columnEscapeEnd} end as ${columnEscapeStart}${col.name}${columnEscapeEnd},""" } mkString "" }
                 coalesce(o.${columnEscapeStart}create_timestamp${columnEscapeEnd}, n.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}create_timestamp${columnEscapeEnd},  
                 coalesce(n.${columnEscapeStart}update_timestamp${columnEscapeEnd}, o.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}update_timestamp${columnEscapeEnd}
-              from ${sqlTablePath(schema, name)}_old o
-              left outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, name)}_new) n
+              from ${sqlTablePath(schema, table+"_old")} o
+              left outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, table+"_new")}) n
               on ${keys map { col => s" o.${columnEscapeStart}${col}${columnEscapeEnd} = n.${columnEscapeStart}${col}${columnEscapeEnd} " } mkString " and " }
               union all 
               select 
                 case when o.${columnEscapeStart}${table}_key${columnEscapeEnd} is null 
-                  then (select coalesce(max(${columnEscapeStart}${table}_key${columnEscapeEnd}),0) from ${schema}.${table}_old) + row_number() over () 
+                  then (select coalesce(max(${columnEscapeStart}${table}_key${columnEscapeEnd}),0) from ${sqlTablePath(schema, table+"_old")}) + row_number() over () 
                   else o.${columnEscapeStart}${table}_key${columnEscapeEnd} end as ${columnEscapeStart}${table}_key${columnEscapeEnd},  
                 ${columns map { col => s"""case when n.${columnEscapeStart}update_timestamp${columnEscapeEnd} is null then o.${columnEscapeStart}${col.name}${columnEscapeEnd} else 
                 n.${columnEscapeStart}${col.name}${columnEscapeEnd} end as ${columnEscapeStart}${col.name}${columnEscapeEnd},""" } mkString "" }
                 coalesce(o.${columnEscapeStart}create_timestamp${columnEscapeEnd}, n.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}create_timestamp${columnEscapeEnd},  
                 coalesce(n.${columnEscapeStart}update_timestamp${columnEscapeEnd}, o.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}update_timestamp ${columnEscapeEnd}
-              from ${sqlTablePath(schema, name)}_old o
-              right outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, name)}_new) n
+              from ${sqlTablePath(schema, table+"_old")} o
+              right outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, table+"_new")}) n
               on ${keys map { col => s" o.${columnEscapeStart}${col}${columnEscapeEnd} = n.${columnEscapeStart}${col}${columnEscapeEnd} " } mkString " and " }
               where n.${columnEscapeStart}update_timestamp${columnEscapeEnd} is not null and o.${columnEscapeStart}create_timestamp${columnEscapeEnd} is null
               """
