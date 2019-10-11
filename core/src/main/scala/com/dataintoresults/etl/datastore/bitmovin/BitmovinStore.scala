@@ -185,6 +185,9 @@ class BitmovinStore extends EtlDatastore with DataStore {
     if(organizationId != "")
       headers = headers ++ Seq(("X-Tenant-Org-Id", organizationId))
 
+    logger.debug("Bitmovin header : " + headers.mkString("(", ", ", ")"))
+    logger.debug("Bitmovin query : " + queryBase.toString())
+
     val queryItems = intervals ++ dimensions ++ aggregs
     val queryMapping = createMapping(queryItems.map(_.col.formula).toArray, table.columns.map(_.formula).toArray)
     val queryEndpoint = aggreg match {
@@ -298,9 +301,24 @@ class BitmovinStore extends EtlDatastore with DataStore {
       private def parseRow(values: IndexedSeq[JsValue]) : IndexedSeq[AnyRef] = {
         val convertedValues = values.zip(items.map(_.col)) map { case (jsValue: JsValue, col: BitmovinColumn) =>
           col.basicType match {
-            case Column.INT => jsValue.asOpt[Int].getOrElse(null).asInstanceOf[AnyRef]             
-            case Column.BIGINT => jsValue.asOpt[Long].getOrElse(null).asInstanceOf[AnyRef]   
+            case Column.INT => jsValue match {
+              case JsNull => null 
+              case JsString(s) => Try(s.toInt)
+                .getOrElse(throw new RuntimeException(s"Bitmovin connector can't understand string ${jsValue.toString} as int in ${table.store.name}.${table.name}.${col.name}."))
+                .asInstanceOf[AnyRef]
+              case JsNumber(n) => jsValue.asOpt[Int].getOrElse(null).asInstanceOf[AnyRef]
+              case _ => throw new RuntimeException(s"Bitmovin connector can't understand ${jsValue.toString} as int in ${table.store.name}.${table.name}.${col.name}.")
+            }
+            case Column.BIGINT => jsValue match {
+              case JsNull => null 
+              case JsString(s) => Try(s.toLong)
+                .getOrElse(throw new RuntimeException(s"Bitmovin connector can't understand string ${jsValue.toString} as bigint in ${table.store.name}.${table.name}.${col.name}."))
+                .asInstanceOf[AnyRef]
+              case JsNumber(n) => jsValue.asOpt[Long].getOrElse(null).asInstanceOf[AnyRef]
+              case _ => throw new RuntimeException(s"Bitmovin connector can't understand ${jsValue.toString} as bigint in ${table.store.name}.${table.name}.${col.name}.")
+            }
             case Column.TEXT => jsValue match {
+              case JsNull => null 
               case JsString(s) => s
               case o: JsValue => o.toString
               case _ => null

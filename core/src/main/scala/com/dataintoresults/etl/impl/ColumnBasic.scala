@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter
 import com.dataintoresults.etl.core.{Column, EtlElement, EtlParameter, Table}
 import com.dataintoresults.etl.core.EtlParameterHelper._
 import com.dataintoresults.util.XmlHelper._
+import java.time.ZoneOffset
 
 class ColumnBasic extends EtlElement("column") with Column {
 	final val defaultTemporalFormat = "yyyy-MM-dd HH:mm:ss" 
@@ -114,12 +115,12 @@ class ColumnBasic extends EtlElement("column") with Column {
 	    null
 	  else
 	    basicType match {
-  	    case Column.DATE => 
-  	      val format = DateTimeFormatter.ofPattern(temporalFormat)
-  	      LocalDate.parse(cell, format)
   	    case Column.DATETIME => 
   	      val format = DateTimeFormatter.ofPattern(temporalFormat)
   	      LocalDateTime.parse(cell, format)
+  	    case Column.DATE => 
+  	      val format = DateTimeFormatter.ofPattern(temporalFormat)
+  	      LocalDate.parse(cell, format)
     		case Column.BIGINT => cell.toLong
     		case Column.INT => cell.toInt
     		case Column.BOOLEAN => cell.toBoolean
@@ -138,7 +139,7 @@ class ColumnBasic extends EtlElement("column") with Column {
   	      a.asInstanceOf[LocalDate].format(format)
   	    case Column.DATETIME => 
   	      val format = DateTimeFormatter.ofPattern(temporalFormat)
-  	      a.asInstanceOf[LocalDateTime].format(format)
+  	      a.asInstanceOf[LocalDateTime].atOffset(ZoneOffset.UTC).format(format)
   	    case _ => a.toString
   	  }
   }
@@ -155,8 +156,8 @@ object ColumnBasic {
       case t if t =:= typeOf[Double] => "double"
       case t if t <:< typeOf[scala.runtime.RichDouble] => "double"
       case t if t =:= typeOf[BigDecimal] => "numeric"
-      case t if t =:= typeOf[LocalDate] => "date"
       case t if t =:= typeOf[LocalDateTime] => "datetime"
+      case t if t =:= typeOf[LocalDate] => "date"
       case _ => "variant"
     }
   }

@@ -25,6 +25,7 @@ import java.sql.PreparedStatement
 import java.sql.Statement
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
+import java.sql.JDBCType
 
 import play.api.Logger
 
@@ -61,13 +62,33 @@ abstract class SqlStore extends EtlDatastore with DataStore {
  
 	
 	// Conversion of java.sql.Types to their bicloud counterpart (not complete)
-	private val jdbcType2EtlTypeMap = Map(2014 -> "datetime", 5 -> "int", -7 -> "int", 93 -> "datetime",  
-	    1  /*CHAR or ENUM in Mysql*/ -> "text",
-	    6 -> "double", 2 -> "numeric", -5 -> "bigint", 12 -> "text", 7 -> "double", 91 -> "date", 3 -> "numeric",
-	    -1 -> "text", 16 -> "int", -16 -> "bigtext", -9 -> "varchar", 8 -> "double", -6 -> "int", 4 -> "int", 
-	    -3 /*VARBINARY*/ -> "bigtext")
+	private val jdbcType2EtlTypeMap = Map(
+    JDBCType.BIGINT -> "bigint",
+    JDBCType.BOOLEAN -> "int",
+    JDBCType.CHAR -> "int",
+    JDBCType.CLOB -> "bigtext",
+    JDBCType.DATE -> "date",
+    JDBCType.DECIMAL -> "numeric",
+    JDBCType.DOUBLE -> "double",
+    JDBCType.FLOAT -> "double",
+    JDBCType.INTEGER -> "int",
+    JDBCType.JAVA_OBJECT -> "variant",
+    JDBCType.LONGNVARCHAR -> "bigtext",
+    JDBCType.LONGVARCHAR -> "bigtext",
+    JDBCType.NCHAR -> "bigtext",
+    JDBCType.NUMERIC -> "numeric",
+    JDBCType.NVARCHAR -> "bigtext",
+    JDBCType.SMALLINT -> "int",
+    JDBCType.SQLXML -> "bigtext",
+    JDBCType.TIME -> "datetime",
+    JDBCType.TIME_WITH_TIMEZONE -> "datetime",
+    JDBCType.TIMESTAMP_WITH_TIMEZONE -> "datetime", 
+    JDBCType.TIMESTAMP -> "datetime",
+    JDBCType.TINYINT -> "int",
+    JDBCType.VARCHAR -> "bigtext")
+    
 	// Conversion of java.sql.Types to string
-	private	val sqlTypes = classOf[java.sql.Types].getFields.toList.map(x => (x.get(null).asInstanceOf[Int], x.getName())).toMap
+	protected	val sqlTypes = classOf[java.sql.Types].getFields.toList.map(x => (x.get(null).asInstanceOf[Int], x.getName())).toMap
 
 	
 	
@@ -84,7 +105,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
  	
  	def sqlType : String
 	def jdbcDriver : String
-	def jdbcUrl : String 
+  def jdbcUrl : String 
 	
 	
 	def createJdbcUrl(host: String, port: String, database: String) : String
@@ -108,7 +129,9 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   private val _sshPrivateKeyLocation = EtlParameter[String](nodeAttribute="sshPrivateKeyLocation", 
     configAttribute = "dw.datastore."+name+".sshPrivateKeyLocation", defaultValue="")
   private val _sshPrivateKeyPassphrase = EtlParameter[String](nodeAttribute="sshPrivateKeyPassphrase", 
-    configAttribute = "dw.datastore."+name+".sshPrivateKeyFilePassphrase", defaultValue="")
+    configAttribute = "dw.datastore."+name+".sshPrivateKeyFilePassphrase", defaultValue="")    
+	private val _extendedConnectionParameters = EtlParameter[String](nodeAttribute="extendedConnectionParameters", configAttribute="dw.datastore."+name+".extendedConnectionParameters", defaultValue="")
+	private val _connectionParameters = EtlParameter[String](nodeAttribute="connectionParameters", configAttribute="dw.datastore."+name+".connectionParameters", defaultValue="")
  	private var _autoDiscovery = EtlChilds[AutoDiscovery]()
 
   private val _tables = EtlChilds[SqlTable]()
@@ -122,6 +145,19 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 	def sshPassword =  _sshPassword.value
  	def sshPrivateKeyLocation = _sshPrivateKeyLocation.value
  	def sshPrivateKeyPassphrase = _sshPrivateKeyPassphrase.value
+  def extendedConnectionParameters = _extendedConnectionParameters.value
+  def connectionParameters = _connectionParameters.value
+
+  
+  def defaultConnectionParameters : String = ""
+
+  def connectionParametersUrl = (connectionParameters, defaultConnectionParameters, extendedConnectionParameters) match {
+    case ("", "", "") => ""
+    case (c, _, _) if c != "" => "?" + c
+    case ("", d, "") => "?" + d
+    case ("", "", e) => "?" + e
+    case ("", d, e) => "?" + d + "&" + e
+  }
 
   def tables = {
     // If there is a auto discovery, make sure we check for tables (by opening a connection)
@@ -517,7 +553,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 	
 	protected def jdbcType2EtlType(sqlType: Int, size: Int) : String = {
 	  try  {
-	    jdbcType2EtlTypeMap(sqlType)
+	    jdbcType2EtlTypeMap(JDBCType.valueOf(sqlType))
 	  } catch {
 	    case e: java.util.NoSuchElementException => "text"
 	  }

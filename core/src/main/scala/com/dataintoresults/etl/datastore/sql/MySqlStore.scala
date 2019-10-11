@@ -34,6 +34,8 @@ import play.api.Logger
 import com.dataintoresults.etl.core.DataStore
 import com.dataintoresults.etl.core.Etl
 import com.dataintoresults.etl.core.Table
+import com.dataintoresults.etl.core.EtlParameter
+
 
 import com.dataintoresults.etl.impl.EtlImpl
 import com.dataintoresults.etl.impl.ColumnBasic
@@ -43,14 +45,17 @@ import com.dataintoresults.etl.core.EtlParameterHelper._
 
 class MySqlStore extends SqlStore {	
 	private val logger: Logger = Logger(this.getClass())
-	
+
+
+
  	def sqlType = "mysql"
 	def jdbcDriver : String = "com.mysql.cj.jdbc.Driver"
 	def jdbcUrl : String = createJdbcUrl(host, port, database)
 	
+	override def defaultConnectionParameters: String = "useSSL=false&zeroDateTimeBehavior=convertToNull&autoReconnect=true&characterEncoding=UTF-8&characterSetResults=UTF-8&useServerPrepStmts=false&rewriteBatchedStatements=true"
 	
 	def createJdbcUrl(host: String, port: String, database: String) : String = 
-	  s"jdbc:mysql://${host}:${port}/${database}?useSSL=false&zeroDateTimeBehavior=convertToNull&autoReconnect=true&characterEncoding=UTF-8&characterSetResults=UTF-8&useServerPrepStmts=false&rewriteBatchedStatements=true"
+	  s"jdbc:mysql://${host}:${port}/${database}${connectionParametersUrl}"
 	
  	override def toString = s"MySqlStore[${name},${host},${user},${password}]"
 

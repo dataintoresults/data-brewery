@@ -43,6 +43,8 @@ import com.dataintoresults.etl.core.EtlParameterHelper._
 
 
 import com.dataintoresults.etl.impl.EtlImpl
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 
 class PostgreSqlStore extends SqlStore {
@@ -51,8 +53,9 @@ class PostgreSqlStore extends SqlStore {
 	def jdbcDriver : String = "org.postgresql.Driver"
 	def jdbcUrl : String = createJdbcUrl(host, port, database)
 	
+	override def defaultConnectionParameters: String = "sslmode=prefer&sslfactory=org.postgresql.ssl.NonValidatingFactory"
 	
-	def createJdbcUrl(host: String, port: String, database: String) : String = s"jdbc:postgresql://${host}:${port}/${database}?sslmode=prefer&sslfactory=org.postgresql.ssl.NonValidatingFactory"
+	def createJdbcUrl(host: String, port: String, database: String) : String = s"jdbc:postgresql://${host}:${port}/${database}${connectionParametersUrl}"
 	
  	override def toString = s"PostgreSqlStore[${name},${host},${user},${password}]"
 
@@ -92,22 +95,23 @@ class PostgreSqlStore extends SqlStore {
 	  def apply(a: Any) : String = a match {
 	    case null => ""
 	    case None => ""
+	    case a : LocalDateTime => a.atOffset(ZoneOffset.UTC).format(fmt2)
 	    case a : LocalDate => a.format(fmt2)
-	    case a : LocalDateTime => a.format(fmt2)
 	    case a : Date => fmt.format(a)
 	    case a : Any => ""
 	  }
 	}
 	
 	private object parseDateTime extends Parser {
-	  val fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSX")
-	  val fmt2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSX");
+	  val fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+	  val fmt2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+	  val fmt3 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	  def apply(a: Any) : String = a match {
 	    case null => ""
 	    case None => ""
-	    case a : LocalDateTime => a.format(fmt2)
-	    case a : LocalDate => a.format(fmt2)
-	    case a : Date => fmt.format(a)
+	    case a : LocalDateTime => a.atOffset(ZoneOffset.UTC).format(fmt2) + "Z"
+	    case a : LocalDate => a.format(fmt3) + " 00:00:00Z"
+	    case a : Date => a.toInstant().atOffset(ZoneOffset.UTC).format(fmt2) + "Z"
 	    case a : Any => ""
 	  }
 	}
