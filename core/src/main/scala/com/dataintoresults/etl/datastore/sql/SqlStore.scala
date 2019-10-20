@@ -87,9 +87,6 @@ abstract class SqlStore extends EtlDatastore with DataStore {
     JDBCType.TINYINT -> "int",
     JDBCType.VARCHAR -> "bigtext")
     
-	// Conversion of java.sql.Types to string
-	protected	val sqlTypes = classOf[java.sql.Types].getFields.toList.map(x => (x.get(null).asInstanceOf[Int], x.getName())).toMap
-
 	
 	
 	def columnEscapeStart = "\"" 

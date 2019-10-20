@@ -103,8 +103,14 @@ class MySqlStore extends SqlStore {
 			
 			logger.debug("Request metadata from : " + sqlTablePath(schema, table))
 			
+
 			val columns = result map { row =>
-			  new ColumnBasic(row.string(4), jdbcType2EtlType(row.int(5), row.intOpt(7) getOrElse 0))  }
+				val jdbcType = row.string(6) match {
+					case "ENUM" => 12 // VARCHAR
+					case _ => row.int(5)
+				}
+				new ColumnBasic(row.string(4), jdbcType2EtlType(jdbcType, row.intOpt(7) getOrElse 0))  
+			}
   			
 			if(columns.isEmpty) {
 			  throw new RuntimeException(s"No table ${sqlTablePath(schema, table)} in the datastore ${this.name}. Can't get definition from the datastore.");
