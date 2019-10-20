@@ -204,6 +204,8 @@ class GoogleAnalytics {
                 metricHeaders(k).getType match {
                   case "INTEGER" => 
                     rowBuilder += Long.box(str.toLong) // should box to ensure it's an object
+                  case "FLOAT" => 
+                    rowBuilder += BigDecimal.apply(str) // should box to ensure it's an object
                   case "CURRENCY" => 
                     rowBuilder += BigDecimal(str)
                   case _ =>  throw new RuntimeException(s"Can only process Google Analytics measures of type INTEGER, here it's ${metricHeaders(k).getType}")
