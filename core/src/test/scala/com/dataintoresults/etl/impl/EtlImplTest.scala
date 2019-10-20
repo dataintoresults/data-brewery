@@ -138,6 +138,40 @@ class EtlImplTest extends FunSuite {
 		}
 	}
 
+  test("Etl need to preprocess include elements that link to multi node files (non XML compliant)") {
+		// Create files in a temp repertory
+		val basePath = Files.createTempDirectory("com.dataintoresults.etl.impl.EtlImplTest3")
+		try {
+			val storePath = Files.createDirectory(basePath.resolve("store"))
+
+			val dwPath = basePath.resolve("dw.xml")
+
+			val result = <datawarehouse>
+					<datastore name="h2_1" type="h2"/>
+					<datastore name="h2_2" type="h2"/>
+				</datawarehouse>
+
+			val dw = <datawarehouse>
+					<include path="store/stores.xml"/>
+				</datawarehouse>
+			val stores = """<datastore name="h2_1" type="h2"/><datastore name="h2_2" type="h2"/>"""
+
+			XML.save(dwPath.toString(), dw)
+
+			Files.write(storePath.resolve("stores.xml"), stores.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+
+			val etl = new EtlImpl()
+			etl.load(dwPath)
+
+			val printer = new scala.xml.PrettyPrinter(80, 2)
+
+			assertResult(printer.format(result))(printer.format(etl.save()))
+		}
+		finally {
+			FileUtils.deleteDirectory(basePath.toFile())
+		}
+	}
+
 
 
 	val xmlProcess = 

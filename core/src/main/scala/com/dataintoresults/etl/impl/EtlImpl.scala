@@ -54,6 +54,9 @@ import com.dataintoresults.etl.explorer._
 import scala.xml.XML
 import scala.collection.JavaConverters._
 
+
+import java.nio.file.{Files, Paths}
+
 trait DataStoreFactory  {
   
   def apply(xmlNode: scala.xml.Node, etl: EtlImpl): DataStore 
@@ -93,11 +96,13 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	
 
 	def load(path: Path): Unit = {		
-		load(loadPath(path))
+		load(loadPath(path).head)
 	}
 
-	private def loadPath(path: Path): scala.xml.Node = {
-		val xml = XML.loadFile(path.toString)
+	private def loadPath(path: Path): Seq[scala.xml.Node] = {
+		// placeHolder is a dirty way to allow files with many toplevel elements
+		val buffer = "<placeHolder>"+new String(Files.readAllBytes(path)) +"</placeHolder>"
+		val xml = XML.loadString(buffer)
 
 		val parentPath = path.toAbsolutePath.getParent()
 
@@ -118,7 +123,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 							.iterator.asScala // Convert to Scala
 							.filter( path => matcher.matches(path)) // filter only matched
 							.map( path => loadPath(parentPath.resolve(path))) // load XML
-							.toSeq
+							.flatten.toSeq
 					}
 					else {
 						if(parentPath.resolve(includePath) == null) {
@@ -129,14 +134,15 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 				}
 				case e: Elem if e.attribute("contentPath").isDefined => {
 					val contentPath = e \@ "contentPath"
-					val content = Files.readAllLines(parentPath.resolve(contentPath)).toArray().mkString("\n")
+					val content = new String(Files.readAllBytes(parentPath.resolve(contentPath)))
 					e.copy(child = e.child ++ scala.xml.PCData(content))
 				}
         case n => n
       }
     }
 
-		new RuleTransformer(includes).transform(xml).head
+		// We take xml.child to remove the placeHolder hack
+		new RuleTransformer(includes).transform(xml.child)
 	}
   
 	def clear() : Unit = {
