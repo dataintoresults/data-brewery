@@ -36,7 +36,20 @@ trait Task {
 	 * Name of the module to execute. Throw exception if taskType != DATASTORE.
 	 */
 	def datastore : String
+
+	/**
+	 * Shell program to execute. Throw exception if taskType != SHELL.
+	 */
+	def shellCommand : String
 	
+	/**
+	 * Shell parameters list. Throw exception if taskType != SHELL.
+	 */
+	def shellParameters: Seq[String] 
+	
+	/**
+	 * Export the task in XML format
+	 */
   def toXml() : scala.xml.Node	
 }
 
@@ -56,4 +69,9 @@ object Task {
 	 * Task used to run a datastore, use the module method to get the module name.
 	 */
 	case object DATASTORE extends TaskType
+
+	/**
+	 * Task used to run a shell program
+	 */
+	case object SHELL extends TaskType
 }

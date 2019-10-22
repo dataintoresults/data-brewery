@@ -21,8 +21,11 @@ package com.dataintoresults.etl.impl
 import scala.collection.mutable.Publisher
 import scala.xml.{XML, Elem, Node, NodeSeq}
 import scala.xml.transform.{RewriteRule, RuleTransformer}
+import scala.util.{Try, Success, Failure}
 
 import java.nio.file.{Files, Path, Paths}
+
+import org.apache.commons.lang3.SystemUtils
 
 import play.api.libs.json.JsObject
 import play.api.libs.json.Json
@@ -56,6 +59,8 @@ import scala.collection.JavaConverters._
 
 
 import java.nio.file.{Files, Paths}
+import java.io.IOException
+import scalaz.effect.IoExceptionOr
 
 trait DataStoreFactory  {
   
@@ -462,6 +467,20 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	  
 	  runDataStoreTable(dataStore, table)
 	}
+
+	
+
+	def runShellCommand(shellCommand: String, parameters: Seq[String]) : Unit = {
+		import sys.process._
+		val parsedParameter = parameters.map(p => ParameterParser.parse(p, this.config))
+		Try((shellCommand + parsedParameter.mkString(" ", " ", "")).!) match {
+			// Adding .bat is it doesn't find the file.
+			case Failure(e : IOException) if SystemUtils.IS_OS_WINDOWS => 
+				(shellCommand+".bat" + parsedParameter.mkString(" ", " ", "")).!
+			case Failure(e) => throw e
+			case Success(code) => Unit
+		}
+	}
 	
 	def runProcess(processName: String) : Unit = {	  
 		val process = findProcess(processName)
@@ -477,6 +496,10 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 				case Task.DATASTORE => {
 					publish(Json.obj("process" -> processName, "step" -> "runDatastore", "datastore" -> task.datastore))
 					runDataStore(task.datastore)
+				}
+				case Task.SHELL => {
+					publish(Json.obj("process" -> processName, "step" -> "runShell", "shellCommand" -> task.shellCommand))
+					runShellCommand(task.shellCommand, task.shellParameters)
 				}
 			}
 		}

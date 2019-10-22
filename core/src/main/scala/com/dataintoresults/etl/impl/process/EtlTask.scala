@@ -38,7 +38,11 @@ abstract class EtlTask extends EtlElement(EtlTask.label) with Task {
 
 	def module: String = throw new RuntimeException(s"Trying to acess to a module from a task that doesn't contain any in process ${process.name}")
 
-	def datastore: String = throw new RuntimeException(s"Trying to acess to a datstore from a task that doesn't contain any in process ${process.name}")
+	def datastore: String = throw new RuntimeException(s"Trying to acess to a datastore from a task that doesn't contain any in process ${process.name}")
+
+	def shellCommand: String = throw new RuntimeException(s"Trying to acess to a shell command from a task that doesn't contain any in process ${process.name}")
+
+	def shellParameters: Seq[String] = throw new RuntimeException(s"Trying to acess to a shell command from a task that doesn't contain any in process ${process.name}")
 }
 
 class EtlTaskModule extends EtlTask {
@@ -58,6 +62,24 @@ class EtlTaskDatastore extends EtlTask {
 	def taskType = Task.DATASTORE
 }
 
+
+class EtlTaskParameters extends EtlElement("parameter") {
+	private val _value = EtlParameter[String](nodeAttribute = "value", cdata = true)
+
+	def value = _value.value 
+}
+
+
+class EtlTaskShell extends EtlTask {
+	private val _shellCommand = EtlParameter[String](nodeAttribute = "shellCommand")
+	private val _parameters = EtlChilds[EtlTaskParameters]
+
+	override def shellCommand = _shellCommand.value 
+	override def shellParameters = _parameters.map(p => p.value)
+
+	def taskType = Task.SHELL
+}
+
 object EtlTask extends EtlElementFactory {
   def label: String = "task"
 
@@ -65,8 +87,8 @@ object EtlTask extends EtlElementFactory {
 		val taskType = 
 			if((node \@? "module").isDefined) new EtlTaskModule()
 			else if((node \@? "datastore").isDefined) new EtlTaskDatastore()
+			else if((node \@? "shellCommand").isDefined) new EtlTaskShell()
       else throw new RuntimeException(s"Can't find the type of task in process ${parent.asInstanceOf[EtlProcess].name}. $context")
-
 
 		taskType.parse(node, config, context).asInstanceOf[EtlTask]
   }
