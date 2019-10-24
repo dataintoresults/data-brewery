@@ -19,6 +19,7 @@
 package com.dataintoresults.etl.datastore.flat
 
 import java.io.{File, BufferedReader, FileReader, StringReader}
+import java.nio.file.{Paths}
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions._
@@ -36,19 +37,31 @@ class FlatFileStoreTest extends FunSuite {
   val dwh =     
     <datawarehouse>
       <datastore name="files" type="flat">
-        <table name="simple_csv" type="csv" location={getClass.getResource("csv.txt").getPath}>
+        <table name="simple_csv" type="csv" location={new File(getClass.getResource("csv.txt").getPath()).toPath().toString()}>
 					<column name="c1" type="string"/>
 					<column name="c2" type="int"/>
 				</table>
-        <table name="compressed_csv" type="csv" location={getClass.getResource("csv.txt.gz").getPath} compression="gz">
+        <table name="compressed_csv" type="csv" location={new File(getClass.getResource("csv.txt.gz").getPath).toPath().toString()} compression="gz">
 					<column name="c1" type="string"/>
 					<column name="c2" type="string"/>
 				</table>
       </datastore>
-      <datastore name="files_relative_path" type="flat" location={getClass.getResource("csv.txt").getPath.dropRight(7)}>
+      <datastore name="files_relative_path" type="flat" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
         <table name="simple_csv" type="csv" location="csv.txt">
 					<column name="c1" type="string"/>
 					<column name="c2" type="string"/>
+				</table>
+      </datastore>
+      <datastore name="multiple_files" type="flat" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
+        <table name="multiple_csv" type="csv" location="csv*.txt">
+					<column name="c1" type="string"/>
+					<column name="c2" type="string"/>
+				</table>
+      </datastore>
+      <datastore name="unconventional" type="flat">
+        <table name="unconventional" type="csv" comment="_" delimiter=";" quote="$" quoteEscape="£" header="false" location={new File(getClass.getResource("delimiter.csv").getPath()).toPath().toString()}>
+					<column name="c1" type="string"/>
+					<column name="c2" type="int"/>
 				</table>
       </datastore>
       <datastore name="files_write" type="flat">
@@ -111,6 +124,40 @@ class FlatFileStoreTest extends FunSuite {
       }
       assertResult("c1, c2\ntoto, 1\ntata, 2") {
         EtlHelper.printDataset(etl.previewTableFromDataStore("files_relative_path", "simple_csv", 10))
+      }
+		}
+  }
+  
+  
+  test("Reading a relative path with multiple CSV (wildcard)") {    
+		using(new EtlImpl()) { implicit etl =>
+      var start = System.currentTimeMillis
+      // Should not thow
+      try {
+        etl.load(dwh)
+      }
+      catch {
+        case e: Exception => fail("Shouldn't throw an exception at spec parsing : " + e.getMessage)
+      }
+      assertResult("c1, c2\ntoto, 1\ntata, 2\ntoto, 3\ntata, 4") {
+        EtlHelper.printDataset(etl.previewTableFromDataStore("multiple_files", "multiple_csv", 10))
+      }
+		}
+  }
+  
+  
+  test("Reading an unconventional CSV") {    
+		using(new EtlImpl()) { implicit etl =>
+      var start = System.currentTimeMillis
+      // Should not thow
+      try {
+        etl.load(dwh)
+      }
+      catch {
+        case e: Exception => fail("Shouldn't throw an exception at spec parsing : " + e.getMessage)
+      }
+      assertResult("c1, c2\ntoto, 1\nta$ta, 2") {
+        EtlHelper.printDataset(etl.previewTableFromDataStore("unconventional", "unconventional", 10))
       }
 		}
   }

@@ -71,7 +71,7 @@ case class CSVReader(
 		    
 		  }
 		  
-		  def close() = {}
+		  def close() = reader.close()
 		}
   }
 }

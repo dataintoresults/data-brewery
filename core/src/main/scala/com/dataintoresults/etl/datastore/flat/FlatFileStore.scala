@@ -32,7 +32,7 @@ import com.dataintoresults.etl.impl.DataSetImpl
 import com.dataintoresults.util.InHelper._
 
 class FlatFileStore extends EtlDatastore with DataStore {  	
-	private val _location = EtlParameter[String](nodeAttribute="location", defaultValue=Some(null))
+	private val _location = EtlParameter[String](nodeAttribute="location", configAttribute="dw.datastore."+name+".location", defaultValue=Some(null))
 
   def location: String = if(_location.value == null) "" else _location.value
   
