@@ -25,6 +25,16 @@ object XmlHelper {
   implicit class XmlBetterNode(node : Node) {
     def \@? (attribute: String) : Option[String] = {
       node.attribute(attribute) flatMap (_.headOption) map (_.text)
+    }    
+    
+    /**
+     * Check for an attribute with insensitive case.
+     */
+    def \@?? (attribute: String) : Option[String] = {
+      node.attributes
+        .filter(m => m.key.equalsIgnoreCase(attribute))
+        .toSeq
+        .flatMap(_.value).headOption.map(_.text)
     }
 
   }

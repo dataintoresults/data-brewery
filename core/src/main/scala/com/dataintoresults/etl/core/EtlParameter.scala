@@ -136,7 +136,7 @@ class EtlParameter[T: EtlParameterType](
     val nodeValue: Option[T] = (node, nodeAttribute) match {
       case (_, None) => None
       case (None, _) => None
-      case (Some(n), Some(a)) => (n \@? a).map(EtlParameterHelper.parse[T](_))
+      case (Some(n), Some(a)) => (n \@?? a).map(EtlParameterHelper.parse[T](_))
     } 
   
     val configValue: Option[T] = (config, configAttribute) match {
@@ -240,7 +240,7 @@ class EtlChilds[T <: EtlElement : TypeTag](minChilds: Int = 0, maxChilds:Int = I
     val label = factory.getOrElse(createInstance[T]).label
 
     childs = node.toSeq.flatMap(n => n.descendant)
-      .filter(_.label == label)
+      .filter(_.label.equalsIgnoreCase(label))
       .map { n =>
         factory.getOrElse(createInstance[T]).parse(node = n, parent = parent).asInstanceOf[T]
       }
