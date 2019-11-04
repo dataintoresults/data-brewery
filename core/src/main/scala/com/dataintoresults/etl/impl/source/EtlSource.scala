@@ -92,10 +92,11 @@ class SourceModule extends EtlSource {
 
   override def processOnModule(etl: EtlImpl, toModule: Module, toTable: Table) = {
     val srcModule = etl.findModule(module).asInstanceOf[ModuleImpl]
+    val sqlStore = srcModule.sqlStore
     val srcTable = srcModule.moduleTable(table) getOrElse
-	    (throw new RuntimeException(s"Unable to locate a table ${table} in module ${module} to create the table ${toModule.name}.${toTable.name}")) 
+	    (throw new RuntimeException(s"Unable to locate a table ${module}.${table} to create the table ${toModule.name}.${toTable.name}")) 
 	    
-    s"select * from ${srcTable.schema}.${srcTable.name}"
+    s"select * from ${sqlStore.sqlTablePath(srcTable.schema, srcTable.name)}"
   }
   
   override def processOnDataStore(etl: EtlImpl, ds: DataStore, dsTable: Table): Option[DataSource] = {	
@@ -146,7 +147,7 @@ class SourceDataStore extends EtlSource {
         val sink = sqlStore.createDataSink(schema, stagingTableName, source.structure)    	    
         etl.overseer.runJob(source, sink)
               
-        s"select * from ${schema}.${stagingTableName}"
+        s"select * from ${sqlStore.sqlTablePath(schema, stagingTableName)}"
       }
     }
   }
@@ -192,7 +193,7 @@ class SourceDataStoreQuery extends EtlSource {
     val sink = sqlStore.createDataSink(schema, stagingTableName, source.structure)    	    
     etl.overseer.runJob(source, sink)
 	        
-	  s"select * from ${schema}.${stagingTableName}"
+	  s"select * from ${sqlStore.sqlTablePath(schema, stagingTableName)}"
   }
   
   override def processOnDataStore(etl: EtlImpl, toDs: DataStore, toTable: Table): Option[DataSource] = {

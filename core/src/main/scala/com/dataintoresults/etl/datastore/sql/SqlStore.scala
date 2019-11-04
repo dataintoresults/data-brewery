@@ -397,7 +397,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 		}
 	}
 
-  protected def sqlTablePath(schema: String, name: String): String = {
+  def sqlTablePath(schema: String, name: String): String = {
     schema match {
       case "" => tableEscapeStart + name + tableEscapeEnd
       case null => tableEscapeStart + name + tableEscapeEnd

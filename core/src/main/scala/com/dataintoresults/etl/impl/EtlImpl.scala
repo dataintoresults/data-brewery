@@ -434,7 +434,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 									*,
 									current_timestamp as ${sqlStore.columnEscapeStart}create_timestamp${sqlStore.columnEscapeStart},  
 									current_timestamp as ${sqlStore.columnEscapeStart}update_timestamp${sqlStore.columnEscapeStart} 
-								from ${schema}.${table.name}_new n
+								from ${sqlStore.sqlTablePath(schema, table.name)}_new n
 								""");	
 		
 						}	  
