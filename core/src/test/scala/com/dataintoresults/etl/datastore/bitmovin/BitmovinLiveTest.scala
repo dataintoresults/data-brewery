@@ -27,6 +27,7 @@ import com.typesafe.config.ConfigFactory
 
 import org.scalatest.FunSuite 
 import org.scalatest.tags.Slow
+import org.scalatest.Ignore
 import org.scalatest.AppendedClues._
 
 import com.dataintoresults.etl.impl.ColumnBasic
@@ -57,6 +58,7 @@ import com.dataintoresults.etl.util.EtlHelper
  * 
  */
 @Slow
+@Ignore // test account no longer working
 class BitmovinLiveTest extends FunSuite {
   test("Live test of bitmovin - big query") {
 
