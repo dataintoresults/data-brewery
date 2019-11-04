@@ -101,7 +101,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	
 
 	def load(path: Path): Unit = {		
-		load(loadPath(path).head)
+		load(loadPath(path).filter(_.isInstanceOf[Elem]).head)
 	}
 
 	private def loadPath(path: Path): Seq[scala.xml.Node] = {
