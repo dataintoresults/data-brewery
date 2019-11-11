@@ -511,8 +511,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
                 n.${columnEscapeStart}${col.name}${columnEscapeEnd} end as ${columnEscapeStart}${col.name}${columnEscapeEnd},""" } mkString "" }
                 coalesce(o.${columnEscapeStart}create_timestamp${columnEscapeEnd}, n.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}create_timestamp${columnEscapeEnd},  
                 coalesce(n.${columnEscapeStart}update_timestamp${columnEscapeEnd}, o.${columnEscapeStart}update_timestamp${columnEscapeEnd}) as ${columnEscapeStart}update_timestamp${columnEscapeEnd}
-              from ${sqlTablePath(schema, name)}_old o
-              full outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, name)}_new) n
+              from ${sqlTablePath(schema, name + "_old")} o
+              full outer join (select current_timestamp as ${columnEscapeStart}update_timestamp${columnEscapeEnd}, * from ${sqlTablePath(schema, name + "_new")}) n
               on ${keys map { col => s" o.${columnEscapeStart}${col}${columnEscapeEnd} = n.${columnEscapeStart}${col}${columnEscapeEnd}  " } mkString " and " }
               """
               
