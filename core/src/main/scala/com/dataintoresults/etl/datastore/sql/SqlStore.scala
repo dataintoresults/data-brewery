@@ -121,6 +121,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   private val _database = EtlParameter[String](nodeAttribute="database", configAttribute= "dw.datastore."+name+".database", defaultValue=defaultDatabase)
   private val _user = EtlParameter[String](nodeAttribute="user", configAttribute="dw.datastore."+name+".user", defaultValue=defaultUser)
   private val _password = EtlParameter[String](nodeAttribute="password", configAttribute="dw.datastore."+name+".password", defaultValue=defaultPassword)
+  private val _sshHost = EtlParameter[String](nodeAttribute="sshHost", configAttribute= "dw.datastore."+name+".sshHost", defaultValue="")
   private val _sshUser = EtlParameter[String](nodeAttribute="sshUser", configAttribute= "dw.datastore."+name+".sshUser", defaultValue="")
   private val _sshPassword = EtlParameter[String](nodeAttribute="sshPassword", configAttribute="dw.datastore."+name+".sshPassword", defaultValue="")
   private val _sshPrivateKeyLocation = EtlParameter[String](nodeAttribute="sshPrivateKeyLocation", 
@@ -133,11 +134,18 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 
   private val _tables = EtlChilds[SqlTable]()
 
-	def host =  _host.value
+  /**
+   * If there is a SSH tunnel but no sshHost, host is the sshHost and host is localhost
+   */
+	def host =  if(_sshHost.value == "" && sshUser != "") "localhost" else _host.value
 	def port =  _port.value
 	def database =  _database.value
 	def user =  _user.value
 	def password =  _password.value
+  /**
+   * If there is a SSH tunnel but no sshHost, host is the sshHost and host is localhost
+   */
+	def sshHost = if(_sshHost.value == "" && sshUser != "") _host.value else _sshHost.value
 	def sshUser =  _sshUser.value
 	def sshPassword =  _sshPassword.value
  	def sshPrivateKeyLocation = _sshPrivateKeyLocation.value
@@ -583,7 +591,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
     if(sshPassword != "" ) {
       try {
         logger.info(s"SqlStore : Openning a SSH tunnel ${sshUser}@${host} with a password (datastore ${name})")
-        _ssh = Some(SSH.apply(host, sshUser, sshPassword))
+        _ssh = Some(SSH.apply(sshHost, sshUser, sshPassword))
         sshLocalPort = _ssh.get.remote2Local("127.0.0.1", port.toInt)
       }
       catch {
@@ -594,9 +602,9 @@ abstract class SqlStore extends EtlDatastore with DataStore {
       try {
         logger.info(s"SqlStore : Openning a SSH tunnel ${sshUser}@${host} with a key (datastore ${name})")
         _ssh = Some(SSH.apply(
-          SSHOptions(host = host, sshUser, identities = List(SSHIdentity(sshPrivateKeyLocation, sshPrivateKeyPassphrase)))
+          SSHOptions(host = sshHost, sshUser, identities = List(SSHIdentity(sshPrivateKeyLocation, sshPrivateKeyPassphrase)))
         ))
-        sshLocalPort = _ssh.get.remote2Local("127.0.0.1", port.toInt)
+        sshLocalPort = _ssh.get.remote2Local(host, port.toInt)
       }
       catch {
         case e: Exception => throw new RuntimeException(s"Issue with SSH Tunneling for ${sshUser}@${host} using private key", e)
