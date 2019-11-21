@@ -95,7 +95,7 @@ class H2Store extends SqlStore {
 			val databaseMetaData = db.conn.getMetaData();
 			
 			// Find columns 
-			val result = new ResultSetTraversable(databaseMetaData.getColumns(null, schema.toUpperCase(), table.toUpperCase(), null));
+			val result = new ResultSetTraversable(databaseMetaData.getColumns(null, schema, table, null));
 			
 			logger.debug("Request metadata from : " + schema + "." + table)
 			
