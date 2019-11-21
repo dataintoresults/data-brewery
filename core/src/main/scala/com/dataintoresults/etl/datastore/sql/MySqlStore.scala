@@ -52,7 +52,7 @@ class MySqlStore extends SqlStore {
 	def jdbcDriver : String = "com.mysql.cj.jdbc.Driver"
 	def jdbcUrl : String = createJdbcUrl(host, port, database)
 	
-	override def defaultConnectionParameters: String = "useSSL=false&zeroDateTimeBehavior=convertToNull&autoReconnect=true&characterEncoding=UTF-8&characterSetResults=UTF-8&useServerPrepStmts=false&rewriteBatchedStatements=true"
+	override def defaultConnectionParameters: String = "zeroDateTimeBehavior=convertToNull&autoReconnect=true&characterEncoding=UTF-8&characterSetResults=UTF-8"
 	
 	def createJdbcUrl(host: String, port: String, database: String) : String = 
 	  s"jdbc:mysql://${host}:${port}/${database}${connectionParametersUrl}"
