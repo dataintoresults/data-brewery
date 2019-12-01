@@ -113,6 +113,7 @@ object Column {
 	/**
    * Dates types (without intradays informations).
 	 * Known types : date
+	 * Internaly represented as java.time.LocalDate
 	 */
 	case object DATE extends BasicType
 
@@ -120,6 +121,7 @@ object Column {
    * Dates types (with intradays informations).
 	 * The timezone information is not expected, and by convention it is UTC.
 	 * Known types : datetime, creationTimestamp, updateTimestamp
+	 * Internaly represented as java.time.LocalDateTime
 	 */
 	case object DATETIME extends BasicType
 }
