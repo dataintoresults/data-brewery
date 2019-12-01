@@ -27,6 +27,8 @@ import java.sql.ResultSet
 import java.sql.ResultSetMetaData
 import java.sql.JDBCType
 
+import java.time.ZoneId
+
 import play.api.Logger
 
 import scalikejdbc._
@@ -361,6 +363,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
       if(columns.isEmpty) 
         structureFromResultSetMetaData(rs.getMetaData)
       else columns
+
+    val store = this
     
 		// We create a DataSource on top of the DataSet
 		new DataSource {
@@ -383,9 +387,20 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 		      rs.next()
 		    didNext = false;
         i = i +1
-        val row : Seq[Any] = 1 to rs.getMetaData.getColumnCount() map { i => rs.getObject(i) match {
-          case b : Boolean with Object => if(b == true) 1 else 0
-          case x => x
+        val row : Seq[Any] = 1 to rs.getMetaData.getColumnCount() map { i => 
+          rs.getObject(i) match {
+            case b : Boolean with Object => if(b == true) 1 else 0
+            case ts : java.sql.Timestamp => structure(i-1).basicType match {
+              case Column.DATETIME => ts.toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime()
+              case Column.DATE => ts.toInstant().atZone(ZoneId.of("UTC")).toLocalDate()
+              case _ => throw new RuntimeException(s"Can only cast SQL timestamp to DATE or DATETIME (error in query from ${store.name}).")
+            }
+            case dt : java.sql.Date => structure(i-1).basicType match {
+              case Column.DATETIME => dt.toLocalDate().atTime(0, 0)
+              case Column.DATE => dt.toLocalDate()
+              case _ => throw new RuntimeException(s"Can only cast SQL date to DATE or DATETIME (error in query from ${store.name}).")
+            }
+            case x => x
           }
         }
         
