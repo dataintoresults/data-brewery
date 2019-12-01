@@ -80,4 +80,22 @@ aaa,"b,bb"
       EtlHelper.printDataSource(parser.toDataSource(reader))
     }
   }
+
+  test("Parsing a timestamp") {
+    val reader = new StringReader("a\n2019-11-22 12:23:05")
+    val structure = Array(new ColumnBasic("c1", "datetime"))
+    val parser = CSVReader(columns = structure)
+
+    val ds = parser.toDataSource(reader)
+    val df = EtlHelper.dataSourceToDataset(ds)
+
+    assertResult("c1\n2019-11-22T12:23:05") {
+      EtlHelper.printDataset(df)
+    }
+
+    assertResult(12) {
+      val ts = df.rows(0)(0).asInstanceOf[java.time.LocalDateTime]
+      ts.getHour()
+    }
+  }
 }

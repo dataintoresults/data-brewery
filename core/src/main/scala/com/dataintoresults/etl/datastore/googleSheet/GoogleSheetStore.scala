@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.text.SimpleDateFormat
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+
 import play.api.libs.json._
 import play.api.Logger
 
@@ -66,6 +69,7 @@ import com.dataintoresults.etl.core.{EtlChilds, EtlDatastore, EtlParameter}
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
 import com.dataintoresults.util.XmlHelper._
+import java.time.ZoneOffset
 
 class GoogleSheetStore extends EtlDatastore with DataStore {
   private val logger: Logger = Logger(this.getClass())
@@ -125,8 +129,8 @@ class GoogleSheetStore extends EtlDatastore with DataStore {
   		          case Column.BIGINT => d.longValue()
   		          case Column.INT => d.intValue()
   		          case Column.NUMERIC => d
-  		          case Column.DATETIME => DateUtil.getJavaDate(d.doubleValue());
-  		          case Column.DATE => DateUtil.getJavaDate(d.doubleValue().floor); // What is after the decimal point is hours and minutes
+  		          case Column.DATETIME => DateUtil.getJavaDate(d.doubleValue()).toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime()
+  		          case Column.DATE => DateUtil.getJavaDate(d.doubleValue().floor).toInstant().atOffset(ZoneOffset.UTC).toLocalDate() // What is after the decimal point is hours and minutes
   		          case Column.BIGTEXT => d.toString();
   		          case Column.TEXT => d.toString();
   		          case _ => throw new RuntimeException(s"For Google Sheet table ${name}.${gsTable.name} for row ${r} and column ${col.name}, it's a numeric field and shouldn't be for this type.")

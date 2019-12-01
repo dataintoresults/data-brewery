@@ -26,10 +26,11 @@ import org.scalatest.Assertions._
 import com.dataintoresults.etl.core.DataSet
 import com.dataintoresults.etl.impl.ColumnBasic
 import com.dataintoresults.etl.util.EtlHelper
+import com.dataintoresults.etl.impl.OverseerBasic
 
 
 class CSVWriterTest extends FunSuite {
-  test("Writing Dataset (StringWriter)") {
+  test("CSVWriterTest - Writing Dataset (StringWriter)") {
     val writer = new StringWriter()
     
     val dataset = DataSet.from(
@@ -44,7 +45,7 @@ class CSVWriterTest extends FunSuite {
     assertResult("a\tb\n1\taaa\n2\tbbb\n", "Writen data different from initial data")(writer.toString) 
   }
   
-  test("Writing Dataset (real file)") {
+  test("CSVWriterTest - Writing Dataset (real file)") {
     val file = File.createTempFile("com.dataintoresults.etl", "CSVWriterTest") 
     file.deleteOnExit()
     val writer = new FileWriter(file)
@@ -63,5 +64,22 @@ class CSVWriterTest extends FunSuite {
     assertResult("# bbb\t1", "Check line 2")(reader.readLine) // Shouldn't it be escaped?
     assertResult("\"a\té à\"\t2", "Check line 3")(reader.readLine)
     reader.close
+  }
+
+  
+  test("CSVWriterTest - Writing Dataset (no writer structure)") {
+    val writer = new StringWriter()
+    
+    val dataset = DataSet.from(
+        Seq("a", "b"), // columns
+        Seq(1, 2), 
+        Seq("aaa","bbb"))
+        
+    val dataSink = CSVWriter().toDataSink(writer)
+
+    val overseer = new OverseerBasic()
+    overseer.runJob(dataset.toDataSource, dataSink)
+    
+    assertResult("a\tb\n1\taaa\n2\tbbb\n", "Writen data different from initial data")(writer.toString) 
   }
 }

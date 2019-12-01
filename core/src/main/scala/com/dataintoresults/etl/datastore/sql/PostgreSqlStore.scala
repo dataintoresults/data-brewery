@@ -90,28 +90,25 @@ class PostgreSqlStore extends SqlStore {
 	}
 	
 	private object parseDate extends Parser {
-	  val fmt = new SimpleDateFormat("yyyy-MM-dd")
 	  val fmt2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	  def apply(a: Any) : String = a match {
 	    case null => ""
 	    case None => ""
-	    case a : LocalDateTime => a.atOffset(ZoneOffset.UTC).format(fmt2)
+	    case a : LocalDateTime => a.format(fmt2)
 	    case a : LocalDate => a.format(fmt2)
-	    case a : Date => fmt.format(a)
 	    case a : Any => ""
 	  }
 	}
 	
 	private object parseDateTime extends Parser {
-	  val fmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
 	  val fmt2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 	  val fmt3 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 	  def apply(a: Any) : String = a match {
 	    case null => ""
 	    case None => ""
-	    case a : LocalDateTime => a.atOffset(ZoneOffset.UTC).format(fmt2) + "Z"
-	    case a : LocalDate => a.format(fmt3) + " 00:00:00Z"
-	    case a : Date => a.toInstant().atOffset(ZoneOffset.UTC).format(fmt2) + "Z"
+	    case a : LocalDateTime => a.format(fmt2) + "Z"
+	    case a : LocalDate => a.format(fmt3) + " 00:00:00.000Z"
+	    case a : Date => throw new RuntimeException("not expected")
 	    case a : Any => ""
 	  }
 	}
@@ -192,7 +189,6 @@ class PostgreSqlStore extends SqlStore {
 		  }
 		}
 	}
- 	
 }
 
 object PostgreSqlStore {

@@ -161,18 +161,7 @@ class HttpStore extends EtlDatastore with DataStore {
 	    null
 	  }
 	  else {
-	    column.basicType match {
-  	    case Column.DATE => 
-  	      val format = new java.text.SimpleDateFormat(column.temporalFormat)
-  	      format.parse(cell)
-  	    case Column.DATETIME => 
-  	      val format = new java.text.SimpleDateFormat(column.temporalFormat)
-  	      format.parse(cell)
-    		case Column.BIGINT => cell.toLong
-    		case Column.INT => cell.toInt
-    		case Column.NUMERIC => BigDecimal(cell) 
-  	    case _ => cell
-  	  }
+			column.fromString(cell)
 	  }
 	}
 	

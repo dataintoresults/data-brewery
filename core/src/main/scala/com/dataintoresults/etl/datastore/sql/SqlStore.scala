@@ -280,7 +280,6 @@ abstract class SqlStore extends EtlDatastore with DataStore {
 		    row.zipWithIndex map {
 		      case (None, i) => stmt.setObject(i+1, null)
 		      case (c:scala.math.BigDecimal, i) => stmt.setObject(i+1, c.bigDecimal) 
-		      case (c:java.util.Date, i) => stmt.setDate(i+1, new java.sql.Date(c.getTime)) 
 		      case (c, i) => stmt.setObject(i+1, c) 
 		    }
         // execute the preparedstatement insert
@@ -391,8 +390,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
           rs.getObject(i) match {
             case b : Boolean with Object => if(b == true) 1 else 0
             case ts : java.sql.Timestamp => structure(i-1).basicType match {
-              case Column.DATETIME => ts.toInstant().atZone(ZoneId.of("UTC")).toLocalDateTime()
-              case Column.DATE => ts.toInstant().atZone(ZoneId.of("UTC")).toLocalDate()
+              case Column.DATETIME => ts.toLocalDateTime()
+              case Column.DATE => ts.toLocalDateTime().toLocalDate()
               case _ => throw new RuntimeException(s"Can only cast SQL timestamp to DATE or DATETIME (error in query from ${store.name}).")
             }
             case dt : java.sql.Date => structure(i-1).basicType match {
@@ -657,7 +656,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
     }
     
     // Discover table structure if specified    
-		discoverTables()
+    discoverTables()
+    
   }
   
 	def close() : Unit = {

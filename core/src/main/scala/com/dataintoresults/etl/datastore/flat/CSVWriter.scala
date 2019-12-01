@@ -30,7 +30,7 @@ import com.dataintoresults.etl.core.Column
 
 
 case class CSVWriter(
-    columns : Seq[Column]  = Array[Column](),
+    columns : Seq[Column] = Array[Column](),
     delimiter : Char = '\t',
     newline : String  = "\n",
     header : Boolean = true,
@@ -39,24 +39,46 @@ case class CSVWriter(
     comment : Char = '#'
     ) {
   def toDataSink(writer: Writer) : DataSink = {
-    val settings = new CsvWriterSettings();
-    settings.getFormat().setLineSeparator(newline)
-    settings.getFormat().setDelimiter(delimiter)
-    settings.getFormat().setQuote(quote)
-    settings.getFormat().setComment(comment)
-    settings.getFormat().setQuoteEscape(quoteEscape)
-    settings.getFormat().setCharToEscapeQuoteEscaping(quoteEscape)
     
-    val csvWriter = new CsvWriter(writer, settings);
-    
-    if(header) 
-      csvWriter.writeHeaders(columns map { c => c.name })
        
-    
-		// We create a DataSource on top of the DataSet
-		// We create a DataSink to store data then update when it's closed
+
 		new DataSink {		  
-		  def structure = columns
+      private var _structure = columns
+
+      private var _csvWriter: CsvWriter = _
+
+      private def csvWriter: CsvWriter = {
+        if(_csvWriter != null) _csvWriter
+        else {
+          val settings = new CsvWriterSettings();
+          settings.getFormat().setLineSeparator(newline)
+          settings.getFormat().setDelimiter(delimiter)
+          settings.getFormat().setQuote(quote)
+          settings.getFormat().setComment(comment)
+          settings.getFormat().setQuoteEscape(quoteEscape)
+          settings.getFormat().setCharToEscapeQuoteEscaping(quoteEscape)
+          
+          _csvWriter = new CsvWriter(writer, settings);
+
+          if(header) 
+            _csvWriter.writeHeaders(structure map { c => c.name })
+
+          _csvWriter
+        }
+      }
+
+      def structure = _structure
+      
+      /*
+       * If we don't have a struture, we delay until something comes in
+       */
+	    override def setIncomingStruture(incomingStructure: Seq[Column]): Unit = {
+        if(structure.isEmpty) 
+          _structure = incomingStructure
+        else {
+          super.setIncomingStruture(incomingStructure)
+        }
+      }
 		  		  
 		  def put(row: Seq[Any]) : Unit = {
 	      csvWriter.writeRow(structure zip row map { case (c, v) => c.toString(v) }:_*)

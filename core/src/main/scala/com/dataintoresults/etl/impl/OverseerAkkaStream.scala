@@ -34,6 +34,9 @@ import com.dataintoresults.etl.core.Overseer
 import com.dataintoresults.etl.core.DataSource
 import com.dataintoresults.etl.core.DataSink
 
+/**
+ * Does not work currently. Dead code.
+ */
 class OverseerAkkaStream(implicit private val system : ActorSystem = ActorSystem("QuickStart")) extends Overseer {
   implicit private val materializer = ActorMaterializer()
   implicit private val ec = system.dispatcher

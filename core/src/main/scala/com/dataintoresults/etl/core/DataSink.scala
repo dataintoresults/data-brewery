@@ -27,9 +27,21 @@ package com.dataintoresults.etl.core
 trait DataSink {  
 	/**
 	 * Return the row structure that this DataSink require.
+	 * This can return null which mean the metadata is not know yet.
 	 */ 
 	def structure : Seq[Column]
 	
+	/**
+	 * Before calling the put method, a provider of data can 
+	 * call the setIncomingStruture method to.inform the row
+	 * structure that will be used.
+	 * An exception can be throwed if the structure is not
+	 * compatible with the datasink structure
+	 */
+	def setIncomingStruture(incomingStructure: Seq[Column]): Unit = {
+		// TODO : check structure and incomingStructure compatiility
+	}
+
 	/**
 	 * Emit a row to this data sink.
 	 */

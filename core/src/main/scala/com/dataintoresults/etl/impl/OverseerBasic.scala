@@ -28,6 +28,8 @@ class OverseerBasic extends Overseer {
   def runJob(extract: DataSource, load: DataSink) : Boolean = {    
     using(extract) { extract =>
       using(load) { load =>
+        // Giving a change for the datasink to react to the incoming data structure
+        load.setIncomingStruture(extract.structure)
         while(extract.hasNext)
           load.put(extract.next())          
       } 

@@ -146,17 +146,19 @@ class PostgreSqlLiveTest extends FunSuite {
 	
   test("Live test of postgresql - check date types") {
 		val store = initStore()
-		val ds = store.createDataSource("select '2019-11-01'::date as dt, '2019-11-01 00:58:25.314159'::timestamp as ts")
+		val ds = store.createDataSource("select '2019-11-01'::date as dt, '2019-11-01 04:58:25.314159'::timestamp as ts")
 		val row = ds.next()
 		val dtAny = row(0)
 		val tsAny = row(1)
 		assert(dtAny.isInstanceOf[java.time.LocalDate]) withClue "'2019-11-01'::date should be of time LocalDate"
-		assert(tsAny.isInstanceOf[java.time.LocalDateTime]) withClue "'2019-11-01 00:58:25.314159'::timestamp should be of time LocalDateTime"
+		assert(tsAny.isInstanceOf[java.time.LocalDateTime]) withClue "'2019-11-01 04:58:25.314159'::timestamp should be of time LocalDateTime"
 		val dt = dtAny.asInstanceOf[java.time.LocalDate]
 		val ts = tsAny.asInstanceOf[java.time.LocalDateTime]
 		assertResult(dt.getMonth())(java.time.Month.NOVEMBER) withClue "'2019-11-01'::date should be of month november"
 		assertResult(ts.get(java.time.temporal.ChronoField.MICRO_OF_SECOND))(314159
-			) withClue "'2019-11-01 00:58:25.314159'::timestamp should have microsecond of 314159."
+			) withClue "'2019-11-01 04:58:25.314159'::timestamp should have microsecond of 314159."
+			assertResult(ts.get(java.time.temporal.ChronoField.HOUR_OF_DAY))(4
+				) withClue "ensure no timzone issue (all should be UTC)"
 	}
 
 

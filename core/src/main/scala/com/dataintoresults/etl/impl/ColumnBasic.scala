@@ -139,7 +139,7 @@ class ColumnBasic extends EtlElement("column") with Column {
   	      a.asInstanceOf[LocalDate].format(format)
   	    case Column.DATETIME => 
   	      val format = DateTimeFormatter.ofPattern(temporalFormat)
-  	      a.asInstanceOf[LocalDateTime].atOffset(ZoneOffset.UTC).format(format)
+  	      a.asInstanceOf[LocalDateTime].format(format)
   	    case _ => a.toString
   	  }
   }
