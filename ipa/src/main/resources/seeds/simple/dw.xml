@@ -1,3 +1,4 @@
+<!-- Simple seed for Data Brewery-->
 <datawarehouse>
 
 	<!--
@@ -10,7 +11,43 @@
 		H2 database can be used for in memory processing but is not recommanded 
 		a data warehouse.
 	-->
-	<datastore name="dw" type="h2"/>
+	<datastore name="dw" type="h2" host="file" database="./h2dw"/>
+
+	<!-- 
+		You can use tabular data from the web with the http type of datastores.
+		See https://databrewery.co/docs/reference/stores/http.html for more details.
+		Notice that you need to specify each column as there is no metadata we can use for CSV files.
+		To read data you can use the command line : ipa read web.earthquake
+	-->
+	<datastore name="web" type="http">
+		<table name="earthquake" location="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.csv" 
+			format="csv" csvHeader="true">
+			<column name="time" type="datetime" temporalFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+			<column name="latitude" type="numeric"/>
+			<column name="longitude" type="numeric"/>
+			<column name="depth" type="numeric"/>
+			<column name="mag" type="numeric"/>
+			<column name="magType" type="text"/>
+			<column name="nst" type="numeric"/>
+			<column name="gap" type="numeric"/>
+			<column name="dmin" type="numeric"/>
+			<column name="rms" type="numeric"/>
+			<column name="net" type="text"/>
+			<column name="id" type="text"/>
+			<column name="update" type="datetime" temporalFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+			<column name="place" type="text"/>
+			<column name="type" type="text"/>
+			<column name="horizontalError" type="numeric"/>
+			<column name="depthError" type="numeric"/>
+			<column name="magError" type="numeric"/>
+			<column name="magNst" type="numeric"/>
+			<column name="status" type="text"/>
+			<column name="locationSource" type="text"/>
+			<column name="magSource" type="text"/>
+		</table>
+	</datastore>
+
+	<!-- Other useful types of datstores -->
 
 	<!--
 		Your production database which you want to import data from.
@@ -48,15 +85,20 @@
 
 
 	<!--
-		Modules are 
+		Modules are working units in your data warehouse.
 		Read more on modules here : https://databrewery.co/docs/reference/specs/modules.html
+		To refresh the module you can use the command line : ipa run-module staging_web
 	-->
-  <module name="staging_prod_db" datastore="dw">
-		<replicate datastore="prod_db"/>
+	<module name="staging_web" datastore="dw">
+		<replicate datastore="web"/>
 	</module>
 
-
+	<!--
+		Processes are 
+		To launch the process, you can use the command line : ipa run-process nightly-batch
+	-->
   <process name="nightly-batch">
+		<run module="staging_web"/>
 		<!-- To add a module to be processed -->
 		<!-- <run module="staging_google_analytics"/>-->
 		<!-- To add a datastore to be processed -->
