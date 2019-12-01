@@ -13,7 +13,7 @@ Data Brewery is an ETL tool for data warehouse building meaning :
 
 ![DataIntoResults Manifesto](https://dataintoresults.com/docs/_images/mdw-white.png)
 
-You can find more documentation on our [documentation website](https://dataintoresults.com/docs/).
+You can find more documentation on the [documentation website](https://databrewery.co/docs/).
 
 
 Simple example
@@ -21,7 +21,7 @@ Simple example
 
 The example of an definition file (XML based) show you how to defined 2 data sources (for a prestashop ERP and Google Analytics) as well as 3 modules (2 for replicating the distant data, and one for moduling business queries).
 
-You can find a more comprehensive example at the [Getting Started](https://dataintoresults.com/docs/getting_started.html) section of our documentation.
+You can find a more comprehensive example at the [Getting Started](https://databrewery.co/docs/getting_started/installation.html) section of the documentation.
 
 ```xml
 <dataWarehouse>
