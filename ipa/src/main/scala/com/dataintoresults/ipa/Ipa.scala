@@ -91,7 +91,7 @@ object Ipa {
   private val logger: Logger = Logger(this.getClass())
   val programName = "ipa"
   val programVersion = "1.0.0-M2"
-  val programDate = "20190825"
+  val programDate = "20191202"
   
   var nbDs: Int = _
   var nbMod: Int = _
@@ -151,7 +151,7 @@ object Ipa {
           
      // Log start of the process
      val uuid = randomUUID.toString()
-     val command = this.getClass.getSimpleName.replaceAll("\\$", "")
+     val command = cliConfig.command.getOrElse("none")
        
      using(openEtl(cliConfig)) { etl =>
        logAction(command, uuid, "START")
