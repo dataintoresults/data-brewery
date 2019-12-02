@@ -37,7 +37,7 @@ class SftpTable extends EtlTable with Table {
 
  	private val _filePattern = EtlParameter[String](nodeAttribute="filePattern", configAttribute = "dw.datastore."+name+".filePattern")
  	private val _fileFormat = EtlParameter[String](nodeAttribute="fileFormat", configAttribute = "dw.datastore."+name+".fileFormat")
- 	private val _csvSeparator = EtlParameter[String](nodeAttribute="csvSeparator", configAttribute = "dw.datastore."+name+".csvSeparator")
+ 	private val _csvSeparator = EtlParameter[String](nodeAttribute="csvSeparator", configAttribute = "dw.datastore."+name+".csvSeparator", defaultValue = "\t")
 
 	def filePattern = _filePattern.value
 	def fileFormat = _fileFormat.value

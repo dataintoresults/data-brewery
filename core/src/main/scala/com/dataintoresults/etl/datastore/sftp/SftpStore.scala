@@ -37,7 +37,7 @@ class SftpStore extends EtlDatastore with DataStore {
  	private var _password = EtlParameter[String](nodeAttribute="password", configAttribute = "dw.datastore."+name+".password")
 	private val _path = EtlParameter[String](nodeAttribute="path", configAttribute = "dw.datastore."+name+".path", defaultValue="/")
 
- 	var _tables : Seq[SftpTable] = List[SftpTable]()
+ 	val _tables = EtlChilds[SftpTable]()
 
 	def host = _host.value
 	def user = _user.value
@@ -67,8 +67,8 @@ class SftpStore extends EtlDatastore with DataStore {
 		// We don't stream currently
 	  SSH.once(host, user, password) { ssh => {
 		  val sftp = new SSHFtp()(ssh);
-				sftp.get(path + '/' + sftpTable.filePattern) match { 
-					case None => throw new RuntimeException(s"No file ${sftpTable.filePattern} found on datastore ${name}")
+				sftp.get(path + sftpTable.filePattern) match { 
+					case None => throw new RuntimeException(s"No file ${path + sftpTable.filePattern} found on datastore ${name}")
 					case Some(txt) => txt.split("\n") foreach { r => datasetBuilder += (r.split(sftpTable.csvSeparator) map { _.trim }) }
 					}
 		  }
