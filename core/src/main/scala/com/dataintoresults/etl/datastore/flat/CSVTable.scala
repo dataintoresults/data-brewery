@@ -33,9 +33,7 @@ import com.dataintoresults.util.XmlHelper._
 import com.dataintoresults.etl.core.{EtlChilds, EtlTable, EtlParent, EtlParameter}
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
-class CSVTable extends EtlTable {
-
-  private val _parent = EtlParent[FlatFileStore]()
+class CSVTable extends FlatFileTable {
 
   private val _columns = EtlChilds[ColumnBasic]()
   private val _location = EtlParameter[String](nodeAttribute="location", configAttribute="dw.datastore."+store.name+"."+name+".location")
@@ -48,7 +46,6 @@ class CSVTable extends EtlTable {
   private val _quoteEscape = EtlParameter[String](nodeAttribute="quoteEscape", configAttribute="dw.datastore."+store.name+"."+name+".quoteEscape", defaultValue= "\\")
   private val _comment = EtlParameter[String](nodeAttribute="comment", configAttribute="dw.datastore."+store.name+"."+name+".comment", defaultValue= "#")
   
-  def store = _parent.get
 
   def location = _location.value
   def locale = _locale.value

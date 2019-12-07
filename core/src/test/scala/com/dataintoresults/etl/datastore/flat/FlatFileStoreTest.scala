@@ -35,45 +35,75 @@ class FlatFileStoreTest extends FunSuite {
   tempFile.deleteOnExit()
   val tempFile2 = File.createTempFile(getClass.getCanonicalName, "")
   tempFile2.deleteOnExit()
+  val tempXlsxFile = File.createTempFile(getClass.getCanonicalName, "")
+  tempXlsxFile.delete() // Excel output doesn't work if the file exists and is empty
+  tempXlsxFile.deleteOnExit()
  
   val dwh =     
     <datawarehouse>
       <datastore name="files" type="flat">
         <table name="simple_csv" type="csv" location={new File(getClass.getResource("csv.txt").getPath()).toPath().toString()}>
-					<column name="c1" type="string"/>
+					<column name="c1" type="text"/>
 					<column name="c2" type="int"/>
 				</table>
         <table name="compressed_csv" type="csv" location={new File(getClass.getResource("csv.txt.gz").getPath).toPath().toString()} compression="gz">
-					<column name="c1" type="string"/>
-					<column name="c2" type="string"/>
+					<column name="c1" type="text"/>
+					<column name="c2" type="text"/>
 				</table>
       </datastore>
       <datastore name="files_relative_path" type="flat" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
         <table name="simple_csv" type="csv" location="csv.txt">
-					<column name="c1" type="string"/>
-					<column name="c2" type="string"/>
+					<column name="c1" type="text"/>
+					<column name="c2" type="text"/>
 				</table>
       </datastore>
       <datastore name="multiple_files" type="flat" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
         <table name="multiple_csv" type="csv" location="csv*.txt">
-					<column name="c1" type="string"/>
-					<column name="c2" type="string"/>
+					<column name="c1" type="text"/>
+					<column name="c2" type="text"/>
 				</table>
       </datastore>
       <datastore name="unconventional" type="flat">
         <table name="unconventional" type="csv" comment="_" delimiter=";" quote="$" quoteEscape="£" header="false" location={new File(getClass.getResource("delimiter.csv").getPath()).toPath().toString()}>
-					<column name="c1" type="string"/>
+					<column name="c1" type="text"/>
 					<column name="c2" type="int"/>
 				</table>
       </datastore>
       <datastore name="files_write" type="flat">
         <table name="simple_csv" type="csv" location={tempFile.getPath}>
-					<column name="d1" type="string"/>
+					<column name="d1" type="text"/>
 					<column name="d2" type="int"/>
 					<source type="datastore" datastore="files" table="simple_csv"/>
 				</table>
         <table name="no_structure_csv" type="csv" location={tempFile2.getPath}>
 					<source type="datastore" datastore="files" table="simple_csv"/>
+				</table>
+      </datastore>
+    </datawarehouse>
+
+    val dwhXlsx = 
+    <datawarehouse>
+      <datastore name="xlsx" type="flat">
+        <table name="test1" type="xlsx" location={new File(getClass.getResource("test-excel.xlsx").getPath()).toPath().toString()}
+          sheet="Test1" colStart="A" rowStart="2">
+          <column name="c1" type="int"/>
+          <column name="c2" type="text"/>
+          <column name="c3" type="date"/>
+        </table>
+        <table name="test2" type="xlsx" location={new File(getClass.getResource("test-excel.xlsx").getPath()).toPath().toString()}
+        sheet="Test2" colStart="AB" rowStart="3">
+          <column name="c1" type="text"/>
+          <column name="c2" type="int"/>
+        </table>
+        <table name="test_write" type="xlsx" location={tempXlsxFile.getPath}
+          sheet="Test_Write" colStart="A" rowStart="1">
+					<source type="datastore" datastore="xlsx" table="test1"/>
+				</table>
+        <table name="test_write_read" type="xlsx" location={tempXlsxFile.getPath}
+          sheet="Test_Write" colStart="A" rowStart="1">
+          <column name="c1" type="int"/>
+          <column name="c2" type="text"/>
+          <column name="c3" type="date"/>
 				</table>
       </datastore>
     </datawarehouse>
@@ -231,4 +261,65 @@ class FlatFileStoreTest extends FunSuite {
       reader.close
 		}
   }
+  
+  test("Reading simple xlsx file") {    
+		using(new EtlImpl()) { implicit etl =>
+      var start = System.currentTimeMillis
+      // Should not thow
+      try {
+        etl.load(dwhXlsx)
+      }
+      catch {
+        case e: Exception => fail("Shouldn't throw an exception at spec parsing : " + e.getMessage)
+      }
+
+      assertResult("c1, c2, c3\n1, a, 2019-12-21\nnull, null, null\n3, c, 2019-12-23") {
+        EtlHelper.printDataset(etl.previewTableFromDataStore("xlsx", "test1", 10))
+      }
+		}
+  }
+
+  
+  
+  test("Reading xlsx file starting at col AB") {    
+		using(new EtlImpl()) { implicit etl =>
+      var start = System.currentTimeMillis
+      // Should not thow
+      try {
+        etl.load(dwhXlsx)
+      }
+      catch {
+        case e: Exception => fail("Shouldn't throw an exception at spec parsing : " + e.getMessage)
+      }
+
+      assertResult("c1, c2\na, 1\nb, 2\nc, 3") {
+        EtlHelper.printDataset(etl.previewTableFromDataStore("xlsx", "test2", 10))
+      }
+		}
+  }
+
+  test("Writing simple xlsx file") {    
+		using(new EtlImpl()) { implicit etl =>
+      var start = System.currentTimeMillis
+      // Should not thow
+      try {
+        etl.load(dwhXlsx)
+      }
+      catch {
+        case e: Exception => fail("Shouldn't throw an exception at spec parsing : " + e.getMessage)
+      }
+      // Should not thow
+//      try {
+        etl.runDataStoreTable("xlsx", "test_write")
+/*      }
+      catch {
+        case e: Exception => fail("Shouldn't fail at writing xlsx : " + e.getMessage); throw e
+      } 
+*/            
+      assertResult("c1, c2, c3\n1, a, 2019-12-21\nnull, null, null\n3, c, 2019-12-23") {
+        EtlHelper.printDataset(etl.previewTableFromDataStore("xlsx", "test_write_read", 10))
+      }
+		}
+  }
+    
 }

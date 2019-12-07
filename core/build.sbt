@@ -39,7 +39,6 @@ libraryDependencies ++= Seq(
   "org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1",
   "com.github.nscala-time" %% "nscala-time" % "2.18.0",
   "org.apache.commons" % "commons-lang3" % "3.6",
-  "org.apache.poi" % "poi" % "3.15",
   "org.jsoup" %  "jsoup" % "1.6.1",
   "org.apache.xmlrpc" % "xmlrpc-client" % "3.1.3",
   "org.clapper" %% "grizzled-slf4j" % "1.3.2",
@@ -57,7 +56,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-logback" % "2.7.3",
   
   "com.typesafe.play" %% "play-ahc-ws-standalone" % "2.0.7",
-  "com.typesafe.play" %% "play-ws-standalone-json" % "2.0.7"
-
-
+  "com.typesafe.play" %% "play-ws-standalone-json" % "2.0.7",
+  
+  "org.apache.poi" % "poi" % "4.1.1",
+  "org.apache.poi" % "poi-ooxml" % "4.1.1"
 )

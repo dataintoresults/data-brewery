@@ -37,7 +37,7 @@ class FlatFileStore extends EtlDatastore with DataStore {
   def location: String = if(_location.value == null) "" else _location.value
   
 
-	private val _tables = EtlChilds[CSVTable]()
+	private val _tables = EtlChilds[FlatFileTable]()
 	def tables : Seq[Table] = _tables
 	 
 	def close(): Unit = {}
