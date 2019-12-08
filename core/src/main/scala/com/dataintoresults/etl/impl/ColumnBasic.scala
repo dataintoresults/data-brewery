@@ -124,7 +124,7 @@ class ColumnBasic extends EtlElement("column") with Column {
     		case Column.BIGINT => cell.toLong
     		case Column.INT => cell.toInt
     		case Column.BOOLEAN => cell.toBoolean
-    		case Column.NUMERIC => BigDecimal(cell) 
+    		case Column.NUMERIC => new java.math.BigDecimal(cell) 
   	    case _ => cell
   	  }
   }
@@ -155,7 +155,7 @@ object ColumnBasic {
       case t if t <:< typeOf[scala.runtime.RichInt] => "int"
       case t if t =:= typeOf[Double] => "double"
       case t if t <:< typeOf[scala.runtime.RichDouble] => "double"
-      case t if t =:= typeOf[BigDecimal] => "numeric"
+      case t if t =:= typeOf[java.math.BigDecimal] => "numeric"
       case t if t =:= typeOf[LocalDateTime] => "datetime"
       case t if t =:= typeOf[LocalDate] => "date"
       case _ => "variant"

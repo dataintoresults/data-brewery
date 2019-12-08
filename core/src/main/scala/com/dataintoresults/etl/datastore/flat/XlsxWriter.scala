@@ -94,7 +94,7 @@ case class XlsxWriter(
               case Column.DATETIME => cell.setCellValue(content.asInstanceOf[LocalDateTime])
               case Column.INT => cell.setCellValue(content.asInstanceOf[Int])
               case Column.LAZY => cell.setCellValue(content.toString())
-              case Column.NUMERIC => cell.setCellValue(content.asInstanceOf[BigDecimal].toDouble)
+              case Column.NUMERIC => cell.setCellValue(content.asInstanceOf[java.math.BigDecimal].doubleValue)
               case Column.TEXT => cell.setCellValue(content.asInstanceOf[String])
               case Column.VARIANT => cell.setCellValue(content.toString())
             }

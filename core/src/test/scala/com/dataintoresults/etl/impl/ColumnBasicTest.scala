@@ -78,13 +78,13 @@ class ColumnBasicTest extends FunSuite {
   
   test("Column need to handle numeric correctly") {
     val col = new ColumnBasic(<column name="a" type="numeric" missingValue="toto"/>)
-    val numeric = BigDecimal("0.3") - BigDecimal("0.2")
+    val numeric = (BigDecimal("0.3") - BigDecimal("0.2")).bigDecimal
     val numericString = "0.1"
     // would be 0.999999 in double and 0.1000001 in float
         
     assertResult(numericString, "Conversion of bigint to string")(col.toString(numeric))
     assertResult(numeric, "Conversion of string to bigint")(col.fromString(numericString))
-    assertResult(numeric.getClass, "Type for a numeric is Long")(col.fromString(numericString).getClass)
+    assertResult(numeric.getClass, "Type for a numeric is java.math.BigDecimal")(col.fromString(numericString).getClass)
     assertResult(null, "Conversion of missing value to bigint (missing value)")(col.fromString("toto"))
     assertResult(null, "Conversion of missing value to bigint (null value)")(col.fromString(null))
     assertResult("toto", "Conversion of missing value to bigint")(col.toString(null))
