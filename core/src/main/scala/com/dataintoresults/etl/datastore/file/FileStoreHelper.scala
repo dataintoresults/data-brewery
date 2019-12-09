@@ -16,12 +16,13 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
+
 import java.nio.file.{Path, Paths, Files}
 import scala.collection.JavaConverters._
 import java.util.regex._
 
-object FlatFileStoreHelper {
+object FileStoreHelper {
 	def listFiles(basePath: String, pattern: String): Seq[Path] = {
 		if(!pattern.contains("""*""")) {
 			// No pattern, simply return the file

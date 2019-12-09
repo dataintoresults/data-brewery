@@ -37,7 +37,7 @@ import com.dataintoresults.util.XmlHelper._
 import com.dataintoresults.etl.core._
 import com.dataintoresults.etl.impl.source._
 import com.dataintoresults.etl.impl.process._
-import com.dataintoresults.etl.datastore.flat.FlatFileStore
+import com.dataintoresults.etl.datastore.file.FileStore
 import com.dataintoresults.etl.datastore.googleAnalytics.GoogleAnalyticsStore
 import com.dataintoresults.etl.datastore.googleSheet.GoogleSheetStore
 import com.dataintoresults.etl.datastore.sftp.SftpStore
@@ -615,7 +615,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 	
 	private def fromXmlDataStore(dsXml : scala.xml.Node) : DataStore = {	  
 		(dsXml \ "@type").text match {
-			case "flat" => FlatFileStore.fromXml(dsXml, config)
+			case FileStore.TYPE => FileStore.fromXml(dsXml, config)
 			case "postgresql" => PostgreSqlStore.fromXml(dsXml, config)
 			case "mysql" => MySqlStore.fromXml(dsXml, config)
 			case "mssql" => MsSqlStore.fromXml(config, this, dsXml)
@@ -632,7 +632,7 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 			// Finally maybe there is a specific data store factory registered
 			case dsType: String =>  dataStoreFactories.get(dsType) match {
         case Some(factory) => factory(dsXml, this)
-        case None => throw new RuntimeException(s"DataStore of type ${dsType} is noot recognized")
+        case None => throw new RuntimeException(s"DataStore of type ${dsType} is not recognized")
       }
 		}
 	}	

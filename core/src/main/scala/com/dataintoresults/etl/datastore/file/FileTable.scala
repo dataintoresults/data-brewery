@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
 
 import java.nio.file.{Files, Path, Paths}
 import java.io.{InputStreamReader, BufferedInputStream, FileInputStream}
@@ -39,7 +39,7 @@ import com.dataintoresults.etl.core.EtlElementFactory
 
 abstract class FlatFileTable extends EtlTable {
 
-  private val _parent = EtlParent[FlatFileStore]()
+  private val _parent = EtlParent[FileStore]()
 
   private val _type = EtlParameter[String](nodeAttribute="type", configAttribute="dw.datastore."+store.name+"."+name+".type")
 
@@ -52,7 +52,7 @@ object FlatFileTable extends EtlElementFactory {
   def parse(node: Node, config: Option[Config] = None, context: String = "", parent: AnyRef = null): EtlElement = {
     val name = EtlParameter[String](nodeAttribute="name")
     name.parse(node)
-    val store = parent.asInstanceOf[FlatFileStore]
+    val store = parent.asInstanceOf[FileStore]
     val tpe = EtlParameter[String](nodeAttribute="type", configAttribute="dw.datastore."+store.name+"."+name.value+".type")
     tpe.parse(node, config, context)
 

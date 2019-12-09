@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
 
 import java.nio.file._
 
@@ -30,7 +30,7 @@ import com.dataintoresults.etl.impl.EtlImpl
 import com.dataintoresults.etl.core.Etl
 import com.dataintoresults.util.Using._
 
-class FlatFileStoreHelperTest extends FunSuite {
+class FileStoreHelperTest extends FunSuite {
 
   test("FlatFileStoreHelperTest tests") {
     val tempDir = Files.createTempDirectory("FlatFileStoreHelperTest_")
@@ -53,27 +53,27 @@ class FlatFileStoreHelperTest extends FunSuite {
 
 
     assertResult(Seq(tempDir).mkString(",")) {
-      FlatFileStoreHelper.listFiles("", tempDir.toString).mkString(",")
+      FileStoreHelper.listFiles("", tempDir.toString).mkString(",")
     } withClue "Identity when pattern is a path and basePath empty"
 
     assertResult(Seq(tempDir).mkString(",")) {
-      FlatFileStoreHelper.listFiles(tempDir.toString,"").mkString(",")
+      FileStoreHelper.listFiles(tempDir.toString,"").mkString(",")
     } withClue "Identity when basePath is a path and pattern empty"
 
     assertResult(Seq(subDir1).mkString(",")) {
-      FlatFileStoreHelper.listFiles(tempDir.toString,"/dir1/subdir1").mkString(",")
+      FileStoreHelper.listFiles(tempDir.toString,"/dir1/subdir1").mkString(",")
     } withClue "Existing file with basePath and non regex pattern"
 
     assertResult(Seq(csv1, csv2, csv3).mkString(",")) {
-      FlatFileStoreHelper.listFiles(tempDir.toString,"/dir1/subdir1/file*.csv").mkString(",")
+      FileStoreHelper.listFiles(tempDir.toString,"/dir1/subdir1/file*.csv").mkString(",")
     } withClue "Existing file with basePath and regex pattern on the last level"
 
     assertResult(Seq(csv1, csv5).mkString(",")) {
-      FlatFileStoreHelper.listFiles(tempDir.toString,"/dir1/*/file121.csv").mkString(",")
+      FileStoreHelper.listFiles(tempDir.toString,"/dir1/*/file121.csv").mkString(",")
     } withClue "Existing file with basePath and regex pattern on a middle level"
 
     assertResult(Seq(csv1, csv2, csv3, csv5, csv6).mkString(",")) {
-      FlatFileStoreHelper.listFiles(tempDir.toString,"/*/*/file*.csv").mkString(",")
+      FileStoreHelper.listFiles(tempDir.toString,"/*/*/file*.csv").mkString(",")
     } withClue "Existing file with basePath and regex pattern on the many level"
 
 

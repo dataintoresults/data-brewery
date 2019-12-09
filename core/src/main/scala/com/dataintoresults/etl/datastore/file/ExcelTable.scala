@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
 
 import java.nio.file.{Paths, Path}
 
@@ -50,7 +50,7 @@ class ExcelTable extends FlatFileTable {
 	def canRead = true
 	
   def read() : DataSource = {
-    val filesList = FlatFileStoreHelper.listFiles(store.location, location)
+    val filesList = FileStoreHelper.listFiles(store.location, location)
 
     new DataSource {
       private var currentDataSource: DataSource = null

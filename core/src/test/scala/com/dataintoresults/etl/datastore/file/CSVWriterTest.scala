@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
 
 import java.io.{File, StringWriter, FileWriter, FileReader, BufferedReader}
 

@@ -16,11 +16,13 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
 
 import java.nio.file.Path
 
 import scala.Option
+
+import play.api.Logger
 
 import org.apache.poi.xssf.usermodel.{XSSFWorkbook, XSSFWorkbookFactory}
 
@@ -44,16 +46,19 @@ case class XlsxWriter(
     sheetName: String,
     colStart: String,
     rowStart: Int
-    ) {
+    ) {      
+  private val logger: Logger = Logger(this.getClass())
+
   def toDataSink(path: Path) : DataSink = {
     val workbook = Files.exists(path) match {
-      case true => new SXSSFWorkbook(new XSSFWorkbook(Files.newInputStream(path)))// open in read-only
-      case false => new SXSSFWorkbook(new XSSFWorkbook())
+      case true => new XSSFWorkbook(Files.newInputStream(path))// open in read-only
+      case false => new XSSFWorkbook()
     }
     
     // get an existing sheet or create one
     val sheet = Option(workbook.getSheet(sheetName)).getOrElse(workbook.createSheet(sheetName))
     val colStartIndex = ExcelHelper.colToIndex(colStart)
+
 
     // We create a DataSource
     new DataSink {
@@ -73,6 +78,21 @@ case class XlsxWriter(
           _structure = incomingStructure
         else {
           super.setIncomingStruture(incomingStructure)
+        }
+
+        // Clean target
+        val lastRowNum = sheet.getLastRowNum()
+        // +1 as hasNext will increment automatically by 1
+        (currentRow+1) until lastRowNum foreach { i =>
+          Option(sheet.getRow(i)).foreach { row =>
+            row
+              // Keep those on left of the table
+              .filter(_.getColumnIndex() >= colStartIndex)
+              // Keep those on right of the table
+              .filter(_.getColumnIndex() < colStartIndex + structure.size)
+              // Remove those in the table space
+              .foreach(row.removeCell(_))
+          }
         }
       }
 		  		  
@@ -100,14 +120,15 @@ case class XlsxWriter(
             }
           }
         }
-	    } 
-		  
+      } 
+      		  
 		  def close() = {
         val outputStream = Files.newOutputStream(path)
         workbook.write(outputStream)
         outputStream.close
-		    workbook.close
+        workbook.close
       }
+
     }
   }
 }

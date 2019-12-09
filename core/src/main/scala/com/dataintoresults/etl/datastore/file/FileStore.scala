@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
 
 
 import com.typesafe.config.Config
@@ -31,7 +31,7 @@ import com.dataintoresults.etl.core.EtlParameterHelper._
 import com.dataintoresults.etl.impl.DataSetImpl
 import com.dataintoresults.util.InHelper._
 
-class FlatFileStore extends EtlDatastore with DataStore {  	
+class FileStore extends EtlDatastore with DataStore {  	
 	private val _location = EtlParameter[String](nodeAttribute="location", configAttribute="dw.datastore."+name+".location", defaultValue=Some(null))
 
   def location: String = if(_location.value == null) "" else _location.value
@@ -45,11 +45,11 @@ class FlatFileStore extends EtlDatastore with DataStore {
 }
 
 
-object FlatFileStore {
-  final val TYPE = "flat" 
+object FileStore {
+  final val TYPE = "file" 
   
 	def fromXml(dsXml : scala.xml.Node, config: Config) : DataStore = {
-		val store = new FlatFileStore()
+		val store = new FileStore()
 		store.parse(dsXml, config)
 		store
 	}

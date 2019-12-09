@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.flat
+package com.dataintoresults.etl.datastore.file
 
 import java.io.{File, BufferedReader, FileReader, StringReader}
 import java.nio.file.{Paths}
@@ -30,7 +30,7 @@ import com.dataintoresults.etl.impl.EtlImpl
 import com.dataintoresults.etl.core.Etl
 import com.dataintoresults.util.Using._
 
-class FlatFileStoreTest extends FunSuite {
+class FileStoreTest extends FunSuite {
   val tempFile = File.createTempFile(getClass.getCanonicalName, "")
   tempFile.deleteOnExit()
   val tempFile2 = File.createTempFile(getClass.getCanonicalName, "")
@@ -41,7 +41,7 @@ class FlatFileStoreTest extends FunSuite {
  
   val dwh =     
     <datawarehouse>
-      <datastore name="files" type="flat">
+      <datastore name="files" type="file">
         <table name="simple_csv" type="csv" location={new File(getClass.getResource("csv.txt").getPath()).toPath().toString()}>
 					<column name="c1" type="text"/>
 					<column name="c2" type="int"/>
@@ -51,25 +51,25 @@ class FlatFileStoreTest extends FunSuite {
 					<column name="c2" type="text"/>
 				</table>
       </datastore>
-      <datastore name="files_relative_path" type="flat" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
+      <datastore name="files_relative_path" type="file" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
         <table name="simple_csv" type="csv" location="csv.txt">
 					<column name="c1" type="text"/>
 					<column name="c2" type="text"/>
 				</table>
       </datastore>
-      <datastore name="multiple_files" type="flat" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
+      <datastore name="multiple_files" type="file" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
         <table name="multiple_csv" type="csv" location="csv*.txt">
 					<column name="c1" type="text"/>
 					<column name="c2" type="text"/>
 				</table>
       </datastore>
-      <datastore name="unconventional" type="flat">
+      <datastore name="unconventional" type="file">
         <table name="unconventional" type="csv" comment="_" delimiter=";" quote="$" quoteEscape="£" header="false" location={new File(getClass.getResource("delimiter.csv").getPath()).toPath().toString()}>
 					<column name="c1" type="text"/>
 					<column name="c2" type="int"/>
 				</table>
       </datastore>
-      <datastore name="files_write" type="flat">
+      <datastore name="files_write" type="file">
         <table name="simple_csv" type="csv" location={tempFile.getPath}>
 					<column name="d1" type="text"/>
 					<column name="d2" type="int"/>
@@ -83,7 +83,7 @@ class FlatFileStoreTest extends FunSuite {
 
     val dwhXlsx = 
     <datawarehouse>
-      <datastore name="xlsx" type="flat">
+      <datastore name="xlsx" type="file">
         <table name="test1" type="xlsx" location={new File(getClass.getResource("test-excel.xlsx").getPath()).toPath().toString()}
           sheet="Test1" colStart="A" rowStart="2">
           <column name="c1" type="int"/>
