@@ -68,6 +68,17 @@ class H2Test extends FunSuite {
 						</source>
 					</table>
 				</datastore>
+
+				<module name="test_h2_overwrite" datastore="test_h2_mem"> 
+					<table name="input">
+						<source type="query">
+							SELECT floor(rand()*3) AS "nb"
+						</source>
+					</table>
+					<table name="overwrite" strategy="overwrite" businessKeys="nb">
+						<source type="module" module="test_h2_overwrite" table="input"/>
+					</table>
+				</module>
 			</datawarehouse>
 
 		val etl = new EtlImpl()
@@ -177,6 +188,24 @@ class H2Test extends FunSuite {
 				assertThrows[Exception] { 
 					EtlHelper.printDataSource(table.get.read())
 			} withClue "Should throws as the server is down"
+		}
+	}
+	
+  test("Live test of H2 - overwrite") {
+		using(init()) { etl =>
+			// First run to create the table
+			etl.runModule("test_h2_overwrite")
+
+			// second run update the table
+			etl.runModule("test_h2_overwrite")
+
+			// Throw a lot a refresh (enough to generate 0, 1 and 2)
+			1 until 20 foreach { _ =>
+				etl.runModule("test_h2_overwrite")
+			}
+
+			assertResult(3)(etl.previewTableFromModule("test_h2_overwrite", "overwrite").size)
+				.withClue("The number of rows should not be greater that 3")
 		}
 	}
 	

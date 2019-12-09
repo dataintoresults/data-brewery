@@ -32,6 +32,8 @@ import org.scalatest.AppendedClues._
 
 import com.dataintoresults.etl.impl.ColumnBasic
 import com.dataintoresults.etl.util.EtlHelper
+import com.dataintoresults.util.Using._
+import com.dataintoresults.etl.impl.EtlImpl
 
 
 /**
@@ -51,6 +53,7 @@ import com.dataintoresults.etl.util.EtlHelper
  */
 @Slow
 class MySqlLiveTest extends FunSuite {
+
 	def initStore()  = {
 		val xml = 
 			<datastore name="test_mysql" type="mysql"> 

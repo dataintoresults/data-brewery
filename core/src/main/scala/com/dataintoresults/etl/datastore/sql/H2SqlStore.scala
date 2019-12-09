@@ -71,21 +71,6 @@ class H2Store extends SqlStore {
 	override def defaultPort = "9092"
 	
 	
-	/*
-	 * We need to uppercase schema and table names.
-	 */
-  override def tableExists(schema: String, name: String) : Boolean = {
-    withDBReadSession { session => 
-      val query = s"SELECT count(1) as nb FROM information_schema.tables WHERE table_schema = '${schema.toUpperCase()}' AND table_name = '${name.toUpperCase()}'"
-			val exists = session.single(query)(rs => rs.int("nb"))
-			if(exists.isDefined && exists.get == 1)
-			  true
-			else 
-			  false
-		}
-  }
-	
-	
 	
 	/*
 	 * We need to uppercase schema and table names.

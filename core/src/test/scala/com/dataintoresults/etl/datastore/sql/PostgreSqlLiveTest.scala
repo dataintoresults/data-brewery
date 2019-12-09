@@ -32,6 +32,9 @@ import org.scalatest.AppendedClues._
 
 import com.dataintoresults.etl.impl.ColumnBasic
 import com.dataintoresults.etl.util.EtlHelper
+import com.dataintoresults.etl.impl.EtlImpl
+
+import com.dataintoresults.util.Using._
 
 
 /**
@@ -51,6 +54,40 @@ import com.dataintoresults.etl.util.EtlHelper
  */
 @Slow
 class PostgreSqlLiveTest extends FunSuite {
+
+	def init(): EtlImpl  = {
+		val xml = 
+			<datawarehouse>
+				<datastore name="test_pg" type="postgresql">
+				</datastore>
+
+				<module name="test_pg_overwrite" datastore="test_pg"> 
+					<table name="input">
+						<source type="query">
+							SELECT floor(random()*3) AS nb
+						</source>
+					</table>
+					<table name="overwrite" strategy="overwrite" businessKeys="nb">
+						<source type="module" module="test_pg_overwrite" table="input"/>
+					</table>
+				</module>
+			</datawarehouse>
+
+		val configPath = "secret/postgresql/postgresql.conf"
+
+		val configFile = new File(configPath)
+	
+		if(!configFile.exists)
+			cancel(s"you need a configuration file $configPath for this test") 
+	
+		val config = ConfigFactory.parseFile(configFile)  
+
+		val etl = new EtlImpl(config)
+		etl.load(xml)
+
+		etl
+	}
+
 	def initStore()  = {
 		val xml = 
 			<datastore name="test_pg" type="postgresql">
@@ -161,5 +198,22 @@ class PostgreSqlLiveTest extends FunSuite {
 				) withClue "ensure no timzone issue (all should be UTC)"
 	}
 
+  test("Live test of Postgresql - overwrite") {
+		using(init()) { etl =>
+			// First run to create the table
+			etl.runModule("test_pg_overwrite")
+
+			// second run update the table
+			etl.runModule("test_pg_overwrite")
+
+			// Throw a lot a refresh (enough to generate 0, 1 and 2)
+			1 until 20 foreach { _ =>
+				etl.runModule("test_pg_overwrite")
+			}
+
+			assertResult(3)(etl.previewTableFromModule("test_pg_overwrite", "overwrite").size)
+				.withClue("The number of rows should not be greater that 3")
+		}
+	}
 
 }
