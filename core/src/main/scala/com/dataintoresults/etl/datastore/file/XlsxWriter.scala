@@ -39,6 +39,7 @@ import com.dataintoresults.etl.core.Column.BIGINT
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.nio.file.Files
+import org.apache.poi.ss.format.CellFormat
 
 
 case class XlsxWriter(
@@ -59,6 +60,13 @@ case class XlsxWriter(
     val sheet = Option(workbook.getSheet(sheetName)).getOrElse(workbook.createSheet(sheetName))
     val colStartIndex = ExcelHelper.colToIndex(colStart)
 
+    val dateStyle = workbook.createCellStyle();
+    // see https://poi.apache.org/apidocs/dev/org/apache/poi/ss/usermodel/BuiltinFormats.html
+    dateStyle.setDataFormat(0xe);
+
+    val dateTimeStyle = workbook.createCellStyle();
+    // see https://poi.apache.org/apidocs/dev/org/apache/poi/ss/usermodel/BuiltinFormats.html
+    dateTimeStyle.setDataFormat(0x16)
 
     // We create a DataSource
     new DataSink {
@@ -110,8 +118,14 @@ case class XlsxWriter(
               case Column.BIGINT => cell.setCellValue(content.asInstanceOf[Long])
               case Column.BIGTEXT => cell.setCellValue(content.asInstanceOf[String])
               case Column.BOOLEAN => cell.setCellValue(content.asInstanceOf[Boolean])
-              case Column.DATE => cell.setCellValue(content.asInstanceOf[LocalDate])
-              case Column.DATETIME => cell.setCellValue(content.asInstanceOf[LocalDateTime])
+              case Column.DATE => {
+                cell.setCellStyle(dateStyle)
+                cell.setCellValue(content.asInstanceOf[LocalDate])
+              }
+              case Column.DATETIME =>  {
+                cell.setCellStyle(dateTimeStyle)
+                cell.setCellValue(content.asInstanceOf[LocalDateTime])
+              }
               case Column.INT => cell.setCellValue(content.asInstanceOf[Int])
               case Column.LAZY => cell.setCellValue(content.toString())
               case Column.NUMERIC => cell.setCellValue(content.asInstanceOf[java.math.BigDecimal].doubleValue)
