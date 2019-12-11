@@ -61,7 +61,7 @@ class H2Store extends SqlStore {
 
   override def convertToSqlType(colType: String): String = {
     super.convertToSqlType(colType) match {
-      case "datetime" => "timestamp"
+      case "datetime" => "timestamp without time zone"
       case "double" => "double precision"
       case "numeric" => "decimal"
       case colType: String => colType

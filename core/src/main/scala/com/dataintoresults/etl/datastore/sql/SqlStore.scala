@@ -399,6 +399,11 @@ abstract class SqlStore extends EtlDatastore with DataStore {
               case Column.DATE => dt.toLocalDate()
               case _ => throw new RuntimeException(s"Can only cast SQL date to DATE or DATETIME (error in query from ${store.name}).")
             }
+            case ts : org.h2.api.TimestampWithTimeZone => structure(i-1).basicType match {
+              case Column.DATETIME => rs.getTimestamp(i).toLocalDateTime()
+              case Column.DATE => rs.getDate(i).toLocalDate()
+              case _ => throw new RuntimeException(s"Can only cast H2 TimestampWithTimeZone to DATE or DATETIME (error in query from ${store.name}).")
+            }
             case x => x
           }
         }
