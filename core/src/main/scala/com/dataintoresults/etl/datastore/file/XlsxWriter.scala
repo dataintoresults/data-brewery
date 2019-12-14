@@ -40,6 +40,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.nio.file.Files
 import org.apache.poi.ss.format.CellFormat
+import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator
 
 
 case class XlsxWriter(
@@ -137,6 +138,8 @@ case class XlsxWriter(
       } 
       		  
 		  def close() = {
+        // Update formulas before closing the file
+        XSSFFormulaEvaluator.evaluateAllFormulaCells(workbook)
         val outputStream = Files.newOutputStream(path)
         workbook.write(outputStream)
         outputStream.close
