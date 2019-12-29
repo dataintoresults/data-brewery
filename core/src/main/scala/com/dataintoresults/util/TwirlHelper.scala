@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (C) 2019 by Obsidian SAS : https://dataintoresults.com/
+ * Copyright (C) 2018 by Obsidian SAS : https://dataintoresults.com/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,12 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.ipa
+package com.dataintoresults.util
 
-import scala.xml.XML
-
-import java.io.StringReader
-import java.time.{LocalDate, LocalDateTime}
-import java.nio.file.{Files, Paths} 
-import java.nio.charset.Charset
-import scala.math.BigDecimal
-
-import org.apache.commons.io.FileUtils
-
-import org.scalatest.FunSuite
-import org.scalatest.Assertions._
-import com.dataintoresults.etl.util.EtlHelper
-import com.dataintoresults.etl.datastore.sql.SqlStore
-import java.nio.file.FileSystems
-
-
-class IpaTest extends FunSuite { 
-	
-  test("Ipa can be launched") { 
-		// 
-		Ipa.main(Array())
-		
-	}
+object TwirlHelper {
+  def cleanTxt(body: String): String = {
+    body.split("\r\n")
+      .filterNot(_.trim().isEmpty()) // remove lines with only spaces
+      .mkString("\n") // rebuild the string
+  }
 }

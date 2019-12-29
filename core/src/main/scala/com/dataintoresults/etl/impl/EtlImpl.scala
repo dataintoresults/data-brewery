@@ -61,6 +61,7 @@ import scala.collection.JavaConverters._
 import java.nio.file.{Files, Paths}
 import java.io.IOException
 import scalaz.effect.IoExceptionOr
+import com.dataintoresults.util.MailHelper
 
 trait DataStoreFactory  {
   
@@ -85,6 +86,8 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
   /*
    * Class members 
    */
+
+	override def publish(event: JsObject) = super.publish(event)
   
   // Start with an empty data warehouse
   private var dw = new DataWarehouseImpl()
@@ -482,28 +485,8 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 		}
 	}
 	
-	def runProcess(processName: String) : Unit = {	  
-		val process = findProcess(processName)
-		
-	  publish(Json.obj("process" -> processName, "step" -> "start"))
-		
-		process.tasks foreach { task =>
-			task.taskType match {
-				case Task.MODULE => {
-					publish(Json.obj("process" -> processName, "step" -> "runModule", "module" -> task.module))
-					runModule(task.module)
-				}
-				case Task.DATASTORE => {
-					publish(Json.obj("process" -> processName, "step" -> "runDatastore", "datastore" -> task.datastore))
-					runDataStore(task.datastore)
-				}
-				case Task.SHELL => {
-					publish(Json.obj("process" -> processName, "step" -> "runShell", "shellCommand" -> task.shellCommand))
-					runShellCommand(task.shellCommand, task.shellParameters)
-				}
-			}
-		}
-	  publish(Json.obj("process" -> processName, "step" -> "end"))
+	def runProcess(processName: String) : ProcessResult = {	  
+		ProcessRunner.run(this, processName)
 	}
 	
 	

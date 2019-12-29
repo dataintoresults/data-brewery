@@ -31,11 +31,20 @@ import com.dataintoresults.etl.impl._
 
 
 
-class EtlProcess extends EtlElement(EtlProcess.label) with Process {
-  protected val _name = EtlParameter[String](nodeAttribute = "name")
-	protected val _tasks = EtlChilds[EtlTask]()
+class EtlProcess extends EtlElementWithName(EtlProcess.label) with Process {
+	private val _email = EtlParameter[String](nodeAttribute="email", configAttribute="dw.process."+name+".email", defaultValue = "")
+	private val _emailWhen = EtlParameter[String](nodeAttribute="emailWhen", configAttribute="dw.process."+name+".emailWhen", defaultValue = "error,warning,success")
+	private val _tasks = EtlChilds[EtlTask]()
   
-  def name: String = _name.value
+  override def emails: Seq[String] = _email.value().split(",").filterNot(_.isEmpty())
+  override def emailWhen: Seq[ProcessResult.ProcessStatus] = _emailWhen.value().split(",").filterNot(_.isEmpty()).map(
+    _ match {
+      case "success" => ProcessResult.Success
+      case "warning" => ProcessResult.Warning
+      case "error" => ProcessResult.Error
+    }
+  )
+
   def tasks: Seq[EtlTask] = _tasks
 
 }

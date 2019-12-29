@@ -8,7 +8,9 @@
 	<!-- 
 		The dw module is the data warehouse where you will store your modules.
 		H2 database can be used for in memory processing but is not recommanded 
-		a data warehouse.
+		for a data warehouse.
+		See https://databrewery.co/docs/reference/stores/databases/h2.html for more 
+		information about H2 databases.
 	-->
 	<datastore name="dw" type="h2"/>
 
@@ -50,13 +52,16 @@
 	<!--
 		Modules are 
 		Read more on modules here : https://databrewery.co/docs/reference/specs/modules.html
+		For instance, a module to duplicate the prod_db database inside the datawarehouse would be :
 	-->
+	<!--
   <module name="staging_prod_db" datastore="dw">
 		<replicate datastore="prod_db"/>
 	</module>
+	-->
 
 
-  <process name="nightly-batch">
+  <process name="nightly">
 		<!-- To add a module to be processed -->
 		<!-- <run module="staging_google_analytics"/>-->
 		<!-- To add a datastore to be processed -->

@@ -65,7 +65,7 @@ trait Etl {
 	
 	def runQuery(store: String, query: String) : DataSet
 
-	def runProcess(processName: String) : Unit
+	def runProcess(processName: String) : ProcessResult
 	
 	def exploreDataStore(store: String) : DataStoreExplorer
 	

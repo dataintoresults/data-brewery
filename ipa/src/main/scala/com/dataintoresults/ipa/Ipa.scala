@@ -91,7 +91,7 @@ object Ipa {
   private val logger: Logger = Logger(this.getClass())
   val programName = "ipa"
   val programVersion = "1.0.0-M2"
-  val programDate = "20191202"
+  val programDate = "20191229"
   
   var nbDs: Int = _
   var nbMod: Int = _
@@ -201,7 +201,7 @@ object Ipa {
   }
 
   def init(cliConfig: CliConfig): Unit = {
-    val seeds = Seq("simple", "complex")
+    val seeds = Seq("simple", "complex", "earthquake")
     if(!seeds.contains(cliConfig.seed)) {
       logger.error(s"Seed should be one of : ${seeds.mkString(",")}.")
     } 
@@ -229,7 +229,7 @@ object Ipa {
       // Therefore we add "placeholder" files in empty directories
       Files.walk(seedPath)
         .skip(1) // Skip the first one as it is the current path
-        .filter(!_.endsWith("placeholder"))
+        .filter(!_.endsWith("placeholder")) // Empty files just to keep the directory under github
         .forEach(s => {
         val d = Paths.get(dest.toString + relativePathForSeeds(seedPath.toString, s.toString))
         if( Files.isDirectory(s) ) {

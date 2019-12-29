@@ -45,6 +45,8 @@ libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.2.19",
   "org.scalaz" %% "scalaz-concurrent" % "7.2.19",
   
+  "org.scalamock" %% "scalamock" % "4.4.0" % Test,  // https://mvnrepository.com/artifact/com.icegreen/greenmail
+  "com.icegreen" % "greenmail" % "1.5.11" % Test,
   "org.scalatest" %% "scalatest" % "3.0.5" % Test,
 
   "org.seleniumhq.selenium" % "selenium-server" % "3.141.59",

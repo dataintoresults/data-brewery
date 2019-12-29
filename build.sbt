@@ -12,10 +12,11 @@ lazy val root = (project in file("."))
   .settings(commonSettings)
   .aggregate(core, ipa)
   .dependsOn(core)
-
+  
 
 lazy val core = project
   .settings(commonSettings)
+  .enablePlugins(SbtTwirl)
 
 lazy val ipa = project
   .settings(commonSettings)

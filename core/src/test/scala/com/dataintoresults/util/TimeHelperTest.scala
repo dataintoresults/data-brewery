@@ -16,30 +16,31 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.ipa
+package com.dataintoresults.util
 
-import scala.xml.XML
-
-import java.io.StringReader
 import java.time.{LocalDate, LocalDateTime}
-import java.nio.file.{Files, Paths} 
-import java.nio.charset.Charset
-import scala.math.BigDecimal
-
-import org.apache.commons.io.FileUtils
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions._
-import com.dataintoresults.etl.util.EtlHelper
-import com.dataintoresults.etl.datastore.sql.SqlStore
-import java.nio.file.FileSystems
+import org.scalatest.AppendedClues._
+import java.time.Duration
 
 
-class IpaTest extends FunSuite { 
-	
-  test("Ipa can be launched") { 
-		// 
-		Ipa.main(Array())
-		
-	}
+class TimeHelperTest extends FunSuite  {
+    
+  test("Check duration formatting") {
+    assertResult("1 day 1 hour 1 minute") {
+      TimeHelper.format(
+        Duration.between(
+          LocalDateTime.of(2012, 1, 1, 1, 1, 1), 
+          LocalDateTime.of(2012, 1, 2, 2, 2, 2)))
+    }    
+    
+    assertResult("2 hours 1 minute 30 seconds") {
+      TimeHelper.format(
+        Duration.between(
+          LocalDateTime.of(2012, 1, 1, 1, 1, 1), 
+          LocalDateTime.of(2012, 1, 1, 3, 2, 31)))
+    }
+  }
 }

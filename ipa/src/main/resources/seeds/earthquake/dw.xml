@@ -1,0 +1,130 @@
+<datawarehouse>
+  <!-- Defined the data warehouse, here we use a local database -->
+  <datastore name="dw" type="h2"  host="file" database="./h2dw"/>
+
+  <!-- Defined the source data coming from the web -->
+  <!-- Can be read with : ipa read web.earthquake -->
+  <datastore name="web" type="http">
+    <table name="earthquake" location="https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.csv" format="csv" csvHeader="true">
+      <column name="time" type="datetime" temporalFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+      <column name="latitude" type="numeric"/>
+      <column name="longitude" type="numeric"/>
+      <column name="depth" type="numeric"/>
+      <column name="mag" type="numeric"/>
+      <column name="magType" type="text"/>
+      <column name="nst" type="numeric"/>
+      <column name="gap" type="numeric"/>
+      <column name="dmin" type="numeric"/>
+      <column name="rms" type="numeric"/>
+      <column name="net" type="text"/>
+      <column name="id" type="text"/>
+      <column name="update" type="datetime" temporalFormat="yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"/>
+      <column name="place" type="text"/>
+      <column name="type" type="text"/>
+      <column name="horizontalError" type="numeric"/>
+      <column name="depthError" type="numeric"/>
+      <column name="magError" type="numeric"/>
+      <column name="magNst" type="numeric"/>
+      <column name="status" type="text"/>
+      <column name="locationSource" type="text"/>
+      <column name="magSource" type="text"/>
+    </table>      
+  </datastore>
+
+  <!-- This module just copy the web.earthquake data source (staging) -->
+  <!-- Can be run with : ipa run-module staging_web -->
+  <module name="staging_web" datastore="dw"> 
+    <table name="earthquake">
+      <source type="datastore" datastore="web" table="earthquake"/>
+    </table>
+  </module>
+
+  <!-- Merge the new data with the old one to keep history (archive) -->
+  <!-- Can be run with : ipa run-module archive_web -->
+  <module name="archive_web" datastore="dw"> 
+    <table name="earthquake" strategy="overwrite" businessKeys="time">
+      <source type="datastore" datastore="web" table="earthquake"/>
+    </table>
+  </module>
+
+  <!-- Model some (simple) stats tables for reporting -->
+  <!-- Can be run with : ipa run-module earthquake -->
+  <module name="earthquake" datastore="dw"> 
+    <table name="daily_stats">
+      <source type="query">
+        select cast("time" as date) as "date", count(*) as "earthquake_count", max("mag") as "max_magnitude",
+          avg("mag") as "avg_magnitude" 
+        from "archive_web"."earthquake"
+        group by cast("time" as date)
+        order by cast("time" as date) desc
+        limit 30
+      </source>
+    </table>
+
+    <table name="weekly_stats">
+      <source type="query">
+        select to_char(cast("time" as date), 'IYYY-IW') as "date", count(*) as "earthquake_count", max("mag") as "max_magnitude",
+          avg("mag") as "avg_magnitude" 
+        from "archive_web"."earthquake"
+        group by to_char(cast("time" as date), 'IYYY-IW')
+        order by to_char(cast("time" as date), 'IYYY-IW') desc
+        limit 14
+      </source>
+    </table>
+
+    <table name="last_big_ones">
+      <source type="query">
+        select "time", "mag", "latitude", "longitude", "place"
+        from "archive_web"."earthquake"
+        order by "mag" desc
+        limit 7
+      </source>
+    </table>
+
+    <table name="mag_vs_depth_corr" type="xlsx" location="earthquake.xlsx"
+      sheet="DATA - mag vs depth" colStart="A" rowStart="2">
+      <source type="query">
+        select "mag", "depth"
+        from "archive_web"."earthquake"
+        order by "time" desc
+        limit 60
+      </source>
+    </table>
+  </module>
+
+  <!-- Output the earthquakes to an Excel report (./report/earthquake.xlsx) -->
+  <!-- Can be run with : ipa run-datastore output -->
+  <datastore name="output" type="file" location="./report/">
+    <table name="daily_stats" type="xlsx" location="earthquake.xlsx"
+      sheet="DATA - Daily stats" colStart="A" rowStart="2">
+      <source type="datastoreQuery" datastore="dw">
+        select * from "earthquake"."daily_stats" order by "date" asc
+      </source>
+    </table>
+    <table name="weekly_stats" type="xlsx" location="earthquake.xlsx"
+      sheet="DATA - Weekly stats" colStart="A" rowStart="2">
+      <source type="datastoreQuery" datastore="dw">
+        select * from "earthquake"."weekly_stats" order by "date" asc
+      </source>
+    </table>
+    <table name="last_big_ones" type="xlsx" location="earthquake.xlsx"
+      sheet="DATA - Greatest earthquakes" colStart="A" rowStart="2">
+      <source type="datastoreQuery" datastore="dw">
+        select * from "earthquake"."last_big_ones" order by "mag" desc
+      </source>
+    </table>
+    <table name="mag_vs_depth_corr" type="xlsx" location="earthquake.xlsx"
+      sheet="DATA - mag vs depth" colStart="A" rowStart="2">
+      <source type="module" module="earthquake" table="mag_vs_depth_corr"/>
+    </table>
+  </datastore>
+
+  <!-- Wrap all tasks in a process -->
+  <!-- Can be run with : ipa run-process process -->
+  <process name="process">
+    <task module="staging_web"/>
+    <task module="archive_web"/>
+    <task module="earthquake"/>
+    <task datastore="output"/>
+  </process>
+</datawarehouse>

@@ -53,7 +53,7 @@ class EtlImplShellTest extends FunSuite {
 	val configContent = """module.variable = "." """
 
   test("Etl need to process shell tasks") {
-		val etl = new EtlImpl(ConfigFactory.parseString(configContent))
+		val etl = new EtlImpl(ConfigFactory.parseString(configContent).withFallback(ConfigFactory.load()))
 		etl.load(dw1)
 
 		val processOpt = Try(etl.findProcess("test"))

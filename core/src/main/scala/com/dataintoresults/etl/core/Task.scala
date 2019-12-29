@@ -23,6 +23,11 @@ package com.dataintoresults.etl.core
  */
 trait Task {
 	/**
+	 * Returns the name of the task.
+	 */
+	def name : String
+
+	/**
 	 * Returns the type of the task.
 	 */
 	def taskType : Task.TaskType
@@ -46,6 +51,11 @@ trait Task {
 	 * Shell parameters list. Throw exception if taskType != SHELL.
 	 */
 	def shellParameters: Seq[String] 
+
+	/*
+	 * Expected behavior if the task fail.
+	 */
+	def onError: Task.OnError
 	
 	/**
 	 * Export the task in XML format
@@ -74,4 +84,13 @@ object Task {
 	 * Task used to run a shell program
 	 */
 	case object SHELL extends TaskType
+
+	
+	/**
+	 * Allowed behavior on error
+	 */
+	sealed trait OnError
+	object OnErrorError extends OnError
+	object OnErrorWarning extends OnError
+	object OnErrorSuccess extends OnError
 }

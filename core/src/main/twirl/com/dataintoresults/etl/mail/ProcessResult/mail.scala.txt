@@ -1,0 +1,18 @@
+@import com.dataintoresults.etl.core.{Process, ProcessResult}
+@import com.dataintoresults.util.TimeHelper
+@(process: Process, result: ProcessResult)
+
+Process @process.name ended with status @{result.status.toString} in @TimeHelper.format(result.duration).
+
+@if(result.warnings.nonEmpty){
+ 
+Warning :
+@for(warning <- result.warnings) { - @warning.message
+}
+}
+@if(result.errors.nonEmpty) {
+ 
+Error :
+@for(error <- result.errors) { - @error.message
+}
+}

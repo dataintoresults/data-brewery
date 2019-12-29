@@ -109,3 +109,11 @@ abstract class EtlElement(_label: String) extends EtlElementFactory  {
     elem
   }
 }
+
+
+import com.dataintoresults.etl.core.EtlParameterHelper._
+
+abstract class EtlElementWithName(_label: String) extends EtlElement(_label)  {
+  private val _name = EtlParameter[String](nodeAttribute="name")
+  def name = _name.value
+}

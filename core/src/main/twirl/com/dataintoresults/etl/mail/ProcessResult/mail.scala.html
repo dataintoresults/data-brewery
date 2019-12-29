@@ -1,0 +1,120 @@
+@import com.dataintoresults.etl.core.Process
+@import com.dataintoresults.etl.core.ProcessResult
+@import com.dataintoresults.util.TimeHelper
+
+@(process: Process, result: ProcessResult)
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {
+  background-color: gray;
+  color: gray;
+}
+
+
+td {
+	padding-left: 1em;
+	padding-right: 1em;
+}
+
+#header {
+	padding-left: 3em;
+	background-color: #ff8000;	
+}
+
+#logo {
+  margin-top: 10px;
+  margin-bottom: 10px;
+	max-height: 50px;
+}
+
+</style>
+</head>
+<body>
+<table width="600px" align="center" style="margin-left:auto; margin-right:auto; background-color:white; border-spacing: 0px">
+<tr>
+	<td id="header">
+		<img id="logo" src="https://databrewery.co/assets/img/logo-bright.png"\>
+	</td>
+</tr>
+
+<tr>
+	<td>
+    <p style="font-size: 1.2em;">
+      Process <b>@process.name</b> ended with status @result.status match {
+        case ProcessResult.Success => { <b style="color:green"> }
+        case ProcessResult.Warning => { <b style="color:orange"> }
+        case ProcessResult.Error => { <b style="color:red"> }
+        case ProcessResult.Unprocessed => { <b style="color:black"> }
+      }@{result.status.toString}</b> in <b>@TimeHelper.format(result.duration)</b>.
+    </p>
+    <p>Process started at @result.startDate and ended at @result.endDate.</p>
+    <p>Content : @{result.childs.size} tasks of which @{result.errors.size} with error, @{result.warnings.size} with warning 
+      and @{result.unprocessedChilds.size} skipped.</p>
+	</td>
+</tr>
+
+<br/>
+
+@if(result.errors.nonEmpty){
+<tr>
+	<td style="text-align:center">
+<h2 style="color:#eb1414">Errors</h2>
+	</td>
+</tr>
+<tr>
+	<td>
+<ul>
+  @for(error <- result.errors) {
+    <li><b style="color:#eb1414">@error.task.name : </b> @error.message</li>
+  }
+</ul>
+	</td>
+</tr>
+<br/>
+}
+
+
+@if(result.warnings.nonEmpty){
+  <tr>
+    <td style="text-align:center">
+  <h2 style="color:#fc9803">Warnings</h2>
+    </td>
+  </tr>
+  <tr>
+    <td>
+  <ul>
+    @for(warning <- result.warnings) {
+      <li><b style="color:#fc9803">@warning.task.name : </b> @warning.message</li>
+    }
+  </ul>
+    </td>
+  </tr>
+  <br/>
+}
+
+<tr>
+  <td style="text-align:center">
+<h2 style="color:black">Timeline</h2>
+  </td>
+</tr>
+<tr>
+  <td>
+<ul>
+@for(child <- result.childs) {
+  <li>@child.status match {
+    case ProcessResult.Success => { <b style="color:green"> }
+    case ProcessResult.Warning => { <b style="color:orange"> }
+    case ProcessResult.Error => { <b style="color:red"> }
+    case ProcessResult.Unprocessed => { <b style="color:black"> }
+  }@child.task.name : </b> @child.message (started at @child.startDate, ended at @child.endDate, duration @TimeHelper.format(child.duration))</li>
+}
+</ul>
+  </td>
+</tr>
+<br/>
+
+</table>
+</body>
+</html>

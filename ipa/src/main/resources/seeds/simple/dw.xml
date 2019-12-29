@@ -1,17 +1,17 @@
 <!-- Simple seed for Data Brewery-->
 <datawarehouse>
 
-	<!--
-		Start with datastores where input data is located
-		Read more on datastores here : https://databrewery.co/docs/reference/specs/datastores.html
-	-->
-
 	<!-- 
 		The dw module is the data warehouse where you will store your modules.
 		H2 database can be used for in memory processing but is not recommanded 
 		a data warehouse.
 	-->
 	<datastore name="dw" type="h2" host="file" database="./h2dw"/>
+
+	<!--
+		Start with datastores where input data is located
+		Read more on datastores here : https://databrewery.co/docs/reference/specs/datastores.html
+	-->
 
 	<!-- 
 		You can use tabular data from the web with the http type of datastores.

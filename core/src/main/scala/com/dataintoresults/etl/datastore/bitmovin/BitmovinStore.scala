@@ -77,6 +77,11 @@ class BitmovinStore extends EtlDatastore with DataStore {
 	private val _licenseKey = EtlParameter[String](nodeAttribute="licenseKey", configAttribute="dw.datastore."+name+".licenseKey")
 	private val _organizationId = EtlParameter[String](nodeAttribute="organizationId", configAttribute="dw.datastore."+name+".organizationId", defaultValue = "")
 
+	private val _limitPerBatch = EtlParameter[Int](nodeAttribute="limitPerBatch", configAttribute="dw.datastore."+name+".limitPerBatch", defaultValue = 200)
+	private val _waitPerCall = EtlParameter[Int](nodeAttribute="waitPerCall", configAttribute="dw.datastore."+name+".waitPerCall", defaultValue = 10)
+	private val _retryPerCall = EtlParameter[Int](nodeAttribute="retryPerCall", configAttribute="dw.datastore."+name+".retryPerCall", defaultValue = 5)
+	private val _delayBetweenCalls = EtlParameter[Int](nodeAttribute="delayBetweenCalls", configAttribute="dw.datastore."+name+".delayBetweenCalls", defaultValue = 110)
+
   private final val baseEndpoint = "https://api.bitmovin.com/v1"
   private final val countEndpoint = baseEndpoint + "/analytics/queries/count"
   private final val sumEndpoint = baseEndpoint + "/analytics/queries/sum"
@@ -93,8 +98,10 @@ class BitmovinStore extends EtlDatastore with DataStore {
   def organizationId = _organizationId.value
   
   private var lastCallTimestamp = 0L
-  private val delayBetweenCalls = 110L
-  private val limitPerBatch = 200
+  private def delayBetweenCalls = _delayBetweenCalls.value()
+  private def limitPerBatch = _limitPerBatch.value()
+  private def waitPerCall = _waitPerCall.value()
+  private def retryPerCall = _retryPerCall.value()
 
   /*
    * List of columns on the Bitmovin side
@@ -251,7 +258,7 @@ class BitmovinStore extends EtlDatastore with DataStore {
         val query = queryBase + ("offset", Json.toJson(nbRows))
 
 
-        val response = retry(5) {
+        val response = retry(retryPerCall) {
           // Avoid to call the API too often
           val currentTimestamp = System.currentTimeMillis() 
           if(currentTimestamp < lastCallTimestamp + delayBetweenCalls) {
@@ -272,7 +279,7 @@ class BitmovinStore extends EtlDatastore with DataStore {
             }
           lastCallTimestamp = System.currentTimeMillis() 
     
-          Await.result(response, 10 second)
+          Await.result(response, waitPerCall second)
         } match {
           case Failure(e) => throw e
           case Success(s) => s

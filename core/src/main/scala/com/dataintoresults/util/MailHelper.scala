@@ -16,30 +16,25 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.ipa
+package com.dataintoresults.util
 
-import scala.xml.XML
+import com.typesafe.config.Config
 
-import java.io.StringReader
-import java.time.{LocalDate, LocalDateTime}
-import java.nio.file.{Files, Paths} 
-import java.nio.charset.Charset
-import scala.math.BigDecimal
+import play.api.libs.mailer._
 
-import org.apache.commons.io.FileUtils
+object MailHelper {
+  def sendEmail(conf: Config, 
+    to : Seq[String],
+    subject: String,
+    bodyText : Option[String] = None,
+    bodyHtml : Option[String] = None): Unit = {
+    val smtpConf = SMTPConfiguration(conf)
 
-import org.scalatest.FunSuite
-import org.scalatest.Assertions._
-import com.dataintoresults.etl.util.EtlHelper
-import com.dataintoresults.etl.datastore.sql.SqlStore
-import java.nio.file.FileSystems
+    val mailer = new SMTPMailer(smtpConf)
 
+    mailer.send(Email(subject, "support@databrewery.co", to, 
+      bodyText = bodyText, bodyHtml = bodyHtml))
 
-class IpaTest extends FunSuite { 
-	
-  test("Ipa can be launched") { 
-		// 
-		Ipa.main(Array())
-		
-	}
+    //play.api.libs.mailer.MailerClient
+  }
 }

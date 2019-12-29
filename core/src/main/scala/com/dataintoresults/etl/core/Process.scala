@@ -32,6 +32,16 @@ trait Process {
 	 * Returns a list of tasks
 	 */
 	def tasks : Seq[Task]
-		
+
+	/**
+	 * Returns a list of email for notifications
+	 */
+	def emails: Seq[String] = Seq.empty
+	
+	/**
+	 * Returns a list of case that trigger email notifications
+	 */
+  def emailWhen: Seq[ProcessResult.ProcessStatus] = Seq.empty
+
   def toXml() : scala.xml.Node
 }
