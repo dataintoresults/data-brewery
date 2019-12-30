@@ -17,6 +17,18 @@
  ******************************************************************************/
 
 package com.dataintoresults.etl.core
+import com.dataintoresults.etl.core.Process.Structure
+
+object Process {
+	sealed trait Structure
+	
+	object Structure {
+		object Auto extends Structure
+		object Serial extends Structure
+		object Dag extends Structure
+	}
+
+}
 
 /**
  * A process is a list of tasks.
@@ -41,7 +53,26 @@ trait Process {
 	/**
 	 * Returns a list of case that trigger email notifications
 	 */
-  def emailWhen: Seq[ProcessResult.ProcessStatus] = Seq.empty
+	def emailWhen: Seq[ProcessResult.ProcessStatus] = Seq.empty
+	
+	/**
+	 * Returns a list of case that trigger email notifications
+	 */
+	def slackWebhook: Option[String] = None
+
+	/**
+	 * Returns a list of case that trigger email notifications
+	 */
+	def slackWhen: Seq[ProcessResult.ProcessStatus] = Seq.empty
+	
+	/**
+	 * Structure of the process:
+	 *  - auto, let the structure be infered from the tasks
+	 *  - serial, each task depends on the preceeding
+	 *  - dag, directed acyclic graph where task predecessor 
+	 *    are given with the dependOn attribute
+	 */
+  def structure: Seq[Structure] = Seq.empty
 
   def toXml() : scala.xml.Node
 }

@@ -52,6 +52,7 @@ abstract class EtlTask extends EtlElement(EtlTask.label) with Task {
 	protected val _name = EtlParameter[String](nodeAttribute = "name", defaultValue = "")
 
 	
+	def dependencies: Seq[String] = Seq()
 
 	def process = _process.get
 

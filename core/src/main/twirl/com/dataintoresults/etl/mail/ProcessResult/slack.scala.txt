@@ -1,0 +1,55 @@
+@import com.dataintoresults.etl.core.{Process, ProcessResult}
+@import com.dataintoresults.util.TimeHelper
+@import com.dataintoresults.util.JsonHelper
+@(process: Process, result: ProcessResult)
+
+@processResultLogo(status: ProcessResult.ProcessStatus) = @{
+  status match {
+    case ProcessResult.Success => ":heavy_check_mark:"
+    case ProcessResult.Warning => ":heavy_multiplication_x:"
+    case ProcessResult.Error => ":red_circle:"
+    case ProcessResult.Unprocessed => ""
+  }
+}
+
+@processResultFunEmoticon(status: ProcessResult.ProcessStatus) = @{
+  status match {
+    case ProcessResult.Success => ":tada:"
+    case ProcessResult.Warning => ":face_with_thermometer:"
+    case ProcessResult.Error => ":scream_cat:"
+    case ProcessResult.Unprocessed => ""
+  }
+}
+
+{
+  "text": "Process @process.name ended with status @{result.status.toString} in @TimeHelper.format(result.duration).",
+  "blocks": [
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "@processResultLogo(result.status) Process *@process.name* ended with status *@{result.status.toString}* in @TimeHelper.format(result.duration). @processResultFunEmoticon(result.status)"
+        }
+    }
+  ]
+  ,
+        "attachments": [
+@if(result.errors.nonEmpty){
+        {
+            "mrkdwn_in": ["text"],
+            "color": "#eb1414",
+            "text": "@for(error <- result.errors) {*@error.task.name :* @JsonHelper.escape(error.message)\n}"
+        }
+}
+@if(result.errors.nonEmpty && result.warnings.nonEmpty){ , }
+@if(result.warnings.nonEmpty){
+        {
+            "mrkdwn_in": ["text"],
+            "color": "#fc9803",
+            "text": "@for(warning <- result.warnings) {*@warning.task.name :* @JsonHelper.escape(warning.message)\n}"
+
+        }
+}
+      ]
+
+}

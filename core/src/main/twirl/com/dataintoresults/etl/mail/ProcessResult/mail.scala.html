@@ -46,7 +46,7 @@ td {
         case ProcessResult.Success => { <b style="color:green"> }
         case ProcessResult.Warning => { <b style="color:orange"> }
         case ProcessResult.Error => { <b style="color:red"> }
-        case ProcessResult.Unprocessed => { <b style="color:black"> }
+        case ProcessResult.Unprocessed => { <b style="color:gray"> }
       }@{result.status.toString}</b> in <b>@TimeHelper.format(result.duration)</b>.
     </p>
     <p>Process started at @result.startDate and ended at @result.endDate.</p>
@@ -107,7 +107,7 @@ td {
     case ProcessResult.Success => { <b style="color:green"> }
     case ProcessResult.Warning => { <b style="color:orange"> }
     case ProcessResult.Error => { <b style="color:red"> }
-    case ProcessResult.Unprocessed => { <b style="color:black"> }
+    case ProcessResult.Unprocessed => { <b style="color:gray"> }
   }@child.task.name : </b> @child.message (started at @child.startDate, ended at @child.endDate, duration @TimeHelper.format(child.duration))</li>
 }
 </ul>

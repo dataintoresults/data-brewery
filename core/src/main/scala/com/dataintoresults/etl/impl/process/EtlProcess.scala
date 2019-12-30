@@ -34,19 +34,27 @@ import com.dataintoresults.etl.impl._
 class EtlProcess extends EtlElementWithName(EtlProcess.label) with Process {
 	private val _email = EtlParameter[String](nodeAttribute="email", configAttribute="dw.process."+name+".email", defaultValue = "")
 	private val _emailWhen = EtlParameter[String](nodeAttribute="emailWhen", configAttribute="dw.process."+name+".emailWhen", defaultValue = "error,warning,success")
+	private val _slackWebhook = EtlParameter[String](nodeAttribute="slackWebhook", configAttribute="dw.process."+name+".slackWebhook", defaultValue = "")
+	private val _slackWhen = EtlParameter[String](nodeAttribute="slackWhen", configAttribute="dw.process."+name+".slackWhen", defaultValue = "error,warning,success")
 	private val _tasks = EtlChilds[EtlTask]()
   
   override def emails: Seq[String] = _email.value().split(",").filterNot(_.isEmpty())
-  override def emailWhen: Seq[ProcessResult.ProcessStatus] = _emailWhen.value().split(",").filterNot(_.isEmpty()).map(
-    _ match {
-      case "success" => ProcessResult.Success
-      case "warning" => ProcessResult.Warning
-      case "error" => ProcessResult.Error
-    }
-  )
+  override def emailWhen: Seq[ProcessResult.ProcessStatus] = _emailWhen.value().split(",").filterNot(_.isEmpty()).map(textToProcessResult(_))
+
+  override def slackWebhook: Option[String] = _slackWebhook.value match {
+    case null => None
+    case "" => None
+    case x => Some(x)
+  }
+  override def slackWhen: Seq[ProcessResult.ProcessStatus] = _slackWhen.value().split(",").filterNot(_.isEmpty()).map(textToProcessResult(_))
 
   def tasks: Seq[EtlTask] = _tasks
 
+  private def textToProcessResult(result: String) = result match {
+    case "success" => ProcessResult.Success
+    case "warning" => ProcessResult.Warning
+    case "error" => ProcessResult.Error
+  }
 }
 
 object EtlProcess   {

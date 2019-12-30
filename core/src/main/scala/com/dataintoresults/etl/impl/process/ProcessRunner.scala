@@ -36,6 +36,7 @@ import com.dataintoresults.util.TwirlHelper
 import scala.util.Try
 import com.dataintoresults.util.TimeHelper
 import java.time.LocalDateTime
+import com.dataintoresults.util.SlackHelper
 
 
 object ProcessRunner {
@@ -51,12 +52,17 @@ object ProcessRunner {
         ProcessResult(ProcessResult.Unprocessed, task, s"Task $task.name unprocessed", LocalDateTime.now(), LocalDateTime.now(), Seq.empty)
       }
       task.taskType match {
+        // If we don't process
+        case _ if shouldStop => {
+          ProcessResult(ProcessResult.Unprocessed, task, s"Task ${task.name} is skipped due to upstream errors", 
+            LocalDateTime.now(), LocalDateTime.now(), Seq.empty)
+        }
         case Task.MODULE => {
           val startDate = LocalDateTime.now()
           etl.publish(Json.obj("process" -> processName, "step" -> "runModule", "module" -> task.module))
           val (status, message) = Try(etl.runModule(task.module)).fold(
             ex => task.onError match {
-              case Task.OnErrorError => (ProcessResult.Error, ex.getMessage())
+              case Task.OnErrorError => shouldStop = true; (ProcessResult.Error, ex.getMessage())
               case Task.OnErrorWarning => (ProcessResult.Warning, ex.getMessage())
               case Task.OnErrorSuccess => (ProcessResult.Success, ex.getMessage())
             },
@@ -69,7 +75,7 @@ object ProcessRunner {
           etl.publish(Json.obj("process" -> processName, "step" -> "runDatastore", "datastore" -> task.datastore))
           val (status, message) = Try(etl.runDataStore(task.datastore)).fold(
             ex => task.onError match {
-              case Task.OnErrorError => (ProcessResult.Error, ex.getMessage())
+              case Task.OnErrorError => shouldStop = true; (ProcessResult.Error, ex.getMessage())
               case Task.OnErrorWarning => (ProcessResult.Warning, ex.getMessage())
               case Task.OnErrorSuccess => (ProcessResult.Success, ex.getMessage())
             },
@@ -82,7 +88,7 @@ object ProcessRunner {
           etl.publish(Json.obj("process" -> processName, "step" -> "runShell", "shellCommand" -> task.shellCommand))
           val (status, message) = Try(etl.runShellCommand(task.shellCommand, task.shellParameters)).fold(
             ex => task.onError match {
-              case Task.OnErrorError => (ProcessResult.Error, ex.getMessage())
+              case Task.OnErrorError => shouldStop = true; (ProcessResult.Error, ex.getMessage())
               case Task.OnErrorWarning => (ProcessResult.Warning, ex.getMessage())
               case Task.OnErrorSuccess => (ProcessResult.Success, ex.getMessage())
             },
@@ -95,7 +101,7 @@ object ProcessRunner {
 
     val result = aggregateFromTasks(process, taskResults)
 
-    if(process.emails.isDefined && process.emailWhen.contains(result.status)) {
+    if(process.emails.nonEmpty && process.emailWhen.contains(result.status)) {
   
       val subject = s"Data Brewery - ${process.name} - ${result.status}"
 
@@ -104,6 +110,14 @@ object ProcessRunner {
       val bodyHtml: String = com.dataintoresults.etl.mail.ProcessResult.html.mail(process, result).body
 
       MailHelper.sendEmail(etl.config.getConfig("dw.mailer"), process.emails, subject, bodyText = Some(bodyText), bodyHtml = Some(bodyHtml))
+
+      
+    }
+
+    if(process.slackWebhook.isDefined && process.slackWhen.contains(result.status)) {      
+      val postText: String = TwirlHelper.cleanTxt(com.dataintoresults.etl.mail.ProcessResult.txt.slack(process, result).body)
+
+      SlackHelper.post(process.slackWebhook.get, Json.parse(postText))
     }
 
     etl.publish(Json.obj("process" -> processName, "step" -> "end"))

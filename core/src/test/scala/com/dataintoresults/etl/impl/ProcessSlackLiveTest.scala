@@ -52,11 +52,13 @@ import com.dataintoresults.etl.core.ProcessResult
 import com.dataintoresults.util.TwirlHelper
 import org.scalatest.Ignore
 import java.io.File
+import com.dataintoresults.etl.core.EtlParameterSource.Xml
+import com.dataintoresults.util.XmlHelper
 
 
 
 //@Ignore
-class ProcessMailLiveTest extends FunSuite with BeforeAndAfter {
+class ProcessSlackLiveTest extends FunSuite with BeforeAndAfter {
   private var greenMail : GreenMail = _
 
   val dw1 = 
@@ -170,30 +172,47 @@ class ProcessMailLiveTest extends FunSuite with BeforeAndAfter {
           </source>
         </table>
       </module>
-
-
-      <!-- dw.process.liveEmail.email is set in the config file -->
-      <process name="liveEmail">
+ 
+      <!-- dw.process.liveSlackError.email is set in the config file -->
+      <process name="liveSlackError">
         <task module="staging_web"/>
         <task module="nok2" onError="warning"/>
+        <task name="warningTask" module="nok2" onError="warning"/>
         <task module="archive_web"/>
         <task module="earthquake"/>
         <task name="failingTask" module="nok2"/>
         <task module="ok2"/>
       </process>
+
+      <!-- dw.process.liveSlackSuccess.email is set in the config file -->
+      <process name="liveSlackSuccess">
+        <task module="staging_web"/>
+        <task module="archive_web"/>
+        <task module="earthquake"/>
+      </process>
+
+      <!-- dw.process.liveSlackWarning.email is set in the config file -->
+      <process name="liveSlackWarning">
+        <task module="staging_web"/>
+        <task module="nok2" onError="warning"/>
+        <task module="archive_web"/>
+        <task module="earthquake"/>
+      </process>
     </datawarehouse>
 
     
-  test("Live email check (manual)") {
+  test("Live slack post check (manual)") {
     
-		val configPath = "secret/mailer.conf"
+		val configPath = "secret/slack.conf"
 
 		val configFile = new File(configPath)
 
 		if(!configFile.exists)
 			cancel(s"you need a configuration file $configPath for this test") 
 
-    val config = ConfigFactory.parseFile(configFile).withFallback(ConfigFactory.load())
+    val config = Try(ConfigFactory.parseFile(configFile).withFallback(ConfigFactory.load())).getOrElse(
+      fail("Issue parsing the configuration file $configPath")
+    )
     
     using(new EtlImpl(config)) { implicit etl =>
       // Should not thow
@@ -201,11 +220,65 @@ class ProcessMailLiveTest extends FunSuite with BeforeAndAfter {
         fail("Shouldn't throw an exception : " + e.getMessage)
       }
 
-      val result = Try(etl.runProcess("liveEmail")).recover { case e : Exception =>
-        fail("Shouldn't throw an exception : " + e.getMessage)
+      val result = Try(etl.runProcess("liveSlackError")).recover { case e : Exception =>
+        fail("Shouldn't throw an exception : " + e.getMessage + " (" + e.getStackTrace()(0) + ")")
       }.get
 
       assertResult(ProcessResult.Error)(result.status)
+    }
+  }
+    
+  test("Live slack success (manual)") {
+    
+		val configPath = "secret/slack.conf"
+
+		val configFile = new File(configPath)
+
+		if(!configFile.exists)
+			cancel(s"you need a configuration file $configPath for this test") 
+
+    val config = Try(ConfigFactory.parseFile(configFile).withFallback(ConfigFactory.load())).getOrElse(
+      fail("Issue parsing the configuration file $configPath")
+    )
+    
+    using(new EtlImpl(config)) { implicit etl =>
+      // Should not thow
+      Try(etl.load(dw1)).recover { case e : Exception =>
+        fail("Shouldn't throw an exception : " + e.getMessage)
+      }
+
+      val result = Try(etl.runProcess("liveSlackSuccess")).recover { case e : Exception =>
+        fail("Shouldn't throw an exception : " + e.getMessage + " (" + e.getStackTrace()(0) + ")")
+      }.get
+
+      assertResult(ProcessResult.Success)(result.status)
+    }
+  }
+
+  test("Live slack warning (manual)") {
+    
+		val configPath = "secret/slack.conf"
+
+		val configFile = new File(configPath)
+
+		if(!configFile.exists)
+			cancel(s"you need a configuration file $configPath for this test") 
+
+    val config = Try(ConfigFactory.parseFile(configFile).withFallback(ConfigFactory.load())).getOrElse(
+      fail("Issue parsing the configuration file $configPath")
+    )
+
+    using(new EtlImpl(config)) { implicit etl =>
+      // Should not thow
+      Try(etl.load(dw1)).recover { case e : Exception =>
+        fail("Shouldn't throw an exception : " + e.getMessage)
+      }
+
+      val result = Try(etl.runProcess("liveSlackWarning")).recover { case e : Exception =>
+        fail("Shouldn't throw an exception : " + e.getMessage + " (" + e.getStackTrace()(0) + ")")
+      }.get
+
+      assertResult(ProcessResult.Warning)(result.status)
     }
   }
 

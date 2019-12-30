@@ -57,6 +57,11 @@ trait Task {
 	 */
 	def onError: Task.OnError
 	
+	/*
+	 * List of other task names that this one depends on (should only be started after).
+	 */
+	def dependencies: Seq[String]
+	
 	/**
 	 * Export the task in XML format
 	 */
