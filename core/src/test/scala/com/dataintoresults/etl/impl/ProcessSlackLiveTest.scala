@@ -57,7 +57,7 @@ import com.dataintoresults.util.XmlHelper
 
 
 
-//@Ignore
+@Ignore
 class ProcessSlackLiveTest extends FunSuite with BeforeAndAfter {
   private var greenMail : GreenMail = _
 

@@ -55,7 +55,7 @@ import java.io.File
 
 
 
-//@Ignore
+@Ignore
 class ProcessMailLiveTest extends FunSuite with BeforeAndAfter {
   private var greenMail : GreenMail = _
 
