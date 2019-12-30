@@ -32,45 +32,57 @@ abstract class EtlElement(_label: String) extends EtlElementFactory  {
 
 
   def parse(node: Node, config: Option[Config] = None, context: String = "", parent: AnyRef = null): EtlElement = {
-    val rm = scala.reflect.runtime.currentMirror
-    // The reverse is to have higher base classes first
-    rm.classSymbol(this.getClass).baseClasses.reverse.foreach { case clazz: ClassSymbol =>
-      val tpe = clazz.toType
-      //println(tpe)
-      val mirror = rm.reflect(this)
-      // First parse the parent if any
-      tpe.members.foreach { case term : TermSymbol =>
-        val tpe = term.info
-        if(tpe <:< typeOf[EtlParent[_]]) {
-          val fieldMirror = mirror.reflectField(term)
-          val p = fieldMirror.get.asInstanceOf[EtlParent[EtlElement]]
-          p.parse(Some(node), config, parent=parent)
+    scala.util.Try {
+      val rm = scala.reflect.runtime.currentMirror
+      // The reverse is to have higher base classes first
+      rm.classSymbol(this.getClass).baseClasses.reverse.foreach { case clazz: ClassSymbol =>
+        val tpe = clazz.toType
+        //println(tpe)
+        val mirror = rm.reflect(this)
+        // First parse the parent if any
+        tpe.members.foreach { case term : TermSymbol =>
+          val tpe = term.info
+          if(tpe <:< typeOf[EtlParent[_]]) {
+            val fieldMirror = mirror.reflectField(term)
+            val p = fieldMirror.get.asInstanceOf[EtlParent[EtlElement]]
+            p.parse(Some(node), config, parent=parent)
+          }
+          case _ => {} // Like trait defined in classes
         }
-        case _ => {} // Like trait defined in classes
+        // Then other properties
+        tpe.members.foreach { case term : TermSymbol =>
+          val tpe = term.info
+          if(tpe <:< typeOf[EtlParameter[String]]) {
+            val fieldMirror = mirror.reflectField(term)
+            val p = fieldMirror.get.asInstanceOf[EtlParameter[String]]
+            p.parse(Some(node), config)
+          }
+          else if(tpe <:< typeOf[EtlParameter[Int]]) {
+            val fieldMirror = mirror.reflectField(term)
+            val p = fieldMirror.get.asInstanceOf[EtlParameter[Int]]
+            p.parse(Some(node), config)
+          }
+          else if(tpe <:< typeOf[EtlChilds[_]]) {
+            val fieldMirror = mirror.reflectField(term)
+            val p = fieldMirror.get.asInstanceOf[EtlChilds[EtlElement]]
+            p.parse(Some(node), config, parent=this)
+          }
+          case _ => {} // Like trait defined in classes
+        }
       }
-      // Then other properties
-      tpe.members.foreach { case term : TermSymbol =>
-        val tpe = term.info
-        if(tpe <:< typeOf[EtlParameter[String]]) {
-          val fieldMirror = mirror.reflectField(term)
-          val p = fieldMirror.get.asInstanceOf[EtlParameter[String]]
-          p.parse(Some(node), config)
-        }
-        else if(tpe <:< typeOf[EtlParameter[Int]]) {
-          val fieldMirror = mirror.reflectField(term)
-          val p = fieldMirror.get.asInstanceOf[EtlParameter[Int]]
-          p.parse(Some(node), config)
-        }
-        else if(tpe <:< typeOf[EtlChilds[_]]) {
-          val fieldMirror = mirror.reflectField(term)
-          val p = fieldMirror.get.asInstanceOf[EtlChilds[EtlElement]]
-          p.parse(Some(node), config, parent=this)
-        }
-        case _ => {} // Like trait defined in classes
-      }
-    }
 
-    this
+      this
+    }.fold(
+      ex => {
+        // Try to get the name
+        val name = node\@? "name"
+        name match {
+          case None => throw new RuntimeException(s"Issue while parsing element ${_label} (${ex.getMessage} @ ${ex.getStackTrace()(0)})")
+          case Some(n) => throw new RuntimeException(s"Issue while parsing element ${_label} with name $n (${ex.getMessage} @ ${ex.getStackTrace()(0)})")
+        }
+      },
+      v => v
+    )
   }
 
   def toXml(): Elem = {
