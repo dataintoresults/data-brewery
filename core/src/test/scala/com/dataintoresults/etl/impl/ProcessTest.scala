@@ -64,6 +64,9 @@ class ProcessTest extends FunSuite  {
         </table>
       </module>
 
+      <process name="emptyProcess">
+      </process>
+
       <process name="shouldSucceed">
         <task module="ok"/>
       </process>
@@ -94,7 +97,7 @@ class ProcessTest extends FunSuite  {
 
       Try(etl.runProcess("shouldSucceed")).fold(
         ex => fail("runModule shouldn't raise an exception when it suceed : " + ex.getMessage),
-        v => assertResult(ProcessResult.Success)(v.status) withClue "Status should ne ProcessResult.Success when it works"
+        v => assertResult(ProcessResult.Success)(v.status) withClue "Status should be ProcessResult.Success when it works"
       )
 
       Try(etl.runProcess("shouldFail")).fold(
@@ -102,6 +105,23 @@ class ProcessTest extends FunSuite  {
         v => {
           assert(v.status == ProcessResult.Error) withClue "Should be Error when it fail"
           assertResult(1)(v.errors.length) withClue "Error count should be 1 for shouldFail process"
+        }
+      )
+    }
+  }
+
+  test("Expect correct ProcessResult for empty processes") {
+    using(new EtlImpl()) { implicit etl =>
+      // Should not thow
+      Try(etl.load(dw1)).recover { case e : Exception =>
+        fail("Shouldn't throw an exception : " + e.getMessage)
+      }
+
+      Try(etl.runProcess("emptyProcess")).fold(
+        ex => fail("runModule shouldn't raise an exception when it suceed : " + ex.getMessage),
+        v => {
+          assertResult(ProcessResult.Success)(v.status) withClue "Status should be ProcessResult.Success when it works"
+          assertResult("No task to process")(v.message) withClue "Message error for process without task."
         }
       )
     }

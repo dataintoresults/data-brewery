@@ -127,17 +127,21 @@ object ProcessRunner {
 
 
   private def aggregateFromTasks(process: Process, taskResults: Seq[ProcessResult]): ProcessResult = {
-    val startDate = taskResults.map(_.startDate).min(TimeHelper.localDateTimeOrdering)
-    val endDate = taskResults.map(_.endDate).max(TimeHelper.localDateTimeOrdering)
+    if(taskResults.isEmpty) {
+      ProcessResult(ProcessResult.Success, process, "No task to process", LocalDateTime.now(), LocalDateTime.now(), Seq.empty)
+    }
+    else {
+      val startDate = taskResults.map(_.startDate).min(TimeHelper.localDateTimeOrdering)
+      val endDate = taskResults.map(_.endDate).max(TimeHelper.localDateTimeOrdering)
 
-    val status = taskResults.map(_.status).maxBy(_.criticity)
+      val status = taskResults.map(_.status).maxBy(_.criticity)
 
-    val warningCount = taskResults.count(_.status == ProcessResult.Warning)
-    val errorCount = taskResults.count(_.status == ProcessResult.Error)
+      val warningCount = taskResults.count(_.status == ProcessResult.Warning)
+      val errorCount = taskResults.count(_.status == ProcessResult.Error)
 
-    val message = s"Process ended"
+      val message = s"Process ended"
 
-    ProcessResult(status, process, message, startDate, endDate, taskResults)
+      ProcessResult(status, process, message, startDate, endDate, taskResults)
+   }
   }
-
 }

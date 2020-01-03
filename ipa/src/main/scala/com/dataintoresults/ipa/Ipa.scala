@@ -91,7 +91,7 @@ object Ipa {
   private val logger: Logger = Logger(this.getClass())
   val programName = "ipa"
   val programVersion = "1.0.0-M2"
-  val programDate = "20191229"
+  val programDate = "20200102"
   
   var nbDs: Int = _
   var nbMod: Int = _
