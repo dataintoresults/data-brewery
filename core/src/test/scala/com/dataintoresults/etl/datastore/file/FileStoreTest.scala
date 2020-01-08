@@ -63,6 +63,12 @@ class FileStoreTest extends FunSuite {
 					<column name="c2" type="text"/>
 				</table>
       </datastore>
+      <datastore name="multiple_locations" type="file" location={new File(getClass.getResource("csv.txt").getPath).toPath().toString().dropRight(7)}>
+        <table name="multiple_locations" type="csv" location="csv.txt|csv2.txt">
+					<column name="c1" type="text"/>
+					<column name="c2" type="text"/>
+				</table>
+      </datastore>
       <datastore name="unconventional" type="file">
         <table name="unconventional" type="csv" comment="_" delimiter=";" quote="$" quoteEscape="£" header="false" location={new File(getClass.getResource("delimiter.csv").getPath()).toPath().toString()}>
 					<column name="c1" type="text"/>
@@ -176,6 +182,22 @@ class FileStoreTest extends FunSuite {
       }
       assertResult("c1, c2\ntoto, 1\ntata, 2\ntoto, 3\ntata, 4") {
         EtlHelper.printDataset(etl.previewTableFromDataStore("multiple_files", "multiple_csv", 10))
+      }
+		}
+  }
+
+  test("Reading a location with multiple files") {    
+		using(new EtlImpl()) { implicit etl =>
+      var start = System.currentTimeMillis
+      // Should not thow
+      try {
+        etl.load(dwh)
+      }
+      catch {
+        case e: Exception => fail("Shouldn't throw an exception at spec parsing : " + e.getMessage)
+      }
+      assertResult("c1, c2\ntoto, 1\ntata, 2\ntoto, 3\ntata, 4") {
+        EtlHelper.printDataset(etl.previewTableFromDataStore("multiple_locations", "multiple_locations", 10))
       }
 		}
   }

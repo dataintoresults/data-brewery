@@ -20,6 +20,8 @@ package com.dataintoresults.etl.datastore.file
 
 import java.nio.file.{Paths, Path}
 
+import play.api.Logger
+
 import com.dataintoresults.etl.core.{DataSource, DataSink, Table, Column}
 import com.dataintoresults.etl.impl.ColumnBasic
 import com.dataintoresults.etl.core.Source
@@ -30,15 +32,19 @@ import com.dataintoresults.etl.core.{EtlChilds, EtlTable, EtlParent, EtlParamete
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
 class ExcelTable extends FlatFileTable {
+  private val logger = Logger(this.getClass)
 
   private val _columns = EtlChilds[ColumnBasic]()
   private val _location = EtlParameter[String](nodeAttribute="location", configAttribute="dw.datastore."+store.name+"."+name+".location")
+  private val _locationSeparator = EtlParameter[String](nodeAttribute="locationSeparator", 
+    configAttribute="dw.datastore."+store.name+"."+name+".locationSeparator", defaultValue="|")
   private val _sheet = EtlParameter[String](nodeAttribute="sheet", configAttribute="dw.datastore."+store.name+"."+name+".sheet")
   private val _colStart = EtlParameter[String](nodeAttribute="colStart", configAttribute="dw.datastore."+store.name+"."+name+".colStart")
   private val _rowStart = EtlParameter[Int](nodeAttribute="rowStart", configAttribute="dw.datastore."+store.name+"."+name+".rowStart")
   
 
   def location = _location.value
+  def locationSepartor = _locationSeparator.value
   def sheet = _sheet.value
   def colStart = _colStart.value
   def rowStart = _rowStart.value
@@ -50,7 +56,9 @@ class ExcelTable extends FlatFileTable {
 	def canRead = true
 	
   def read() : DataSource = {
-    val filesList = FileStoreHelper.listFiles(store.location, location)
+    val filesList = FileStoreHelper.listFiles(store.location, location, locationSepartor)
+
+    logger.debug(s"${store.name}.${name}: Finding ${filesList.size} files that match the pattern ${store.location} + ${location}.")
 
     new DataSource {
       private var currentDataSource: DataSource = null
@@ -61,7 +69,9 @@ class ExcelTable extends FlatFileTable {
       def hasNext: Boolean = {
         if(currentDataSource == null || !currentDataSource.hasNext) {
           if(fileIterator.hasNext) {
-            currentDataSource = nextDataSource(fileIterator.next)
+            val nextFile = fileIterator.next
+            logger.debug(s"${store.name}.${name}: Parsing ${nextFile.toString}.")
+            currentDataSource = nextDataSource(nextFile)
             currentDataSource.hasNext
           }
           else {

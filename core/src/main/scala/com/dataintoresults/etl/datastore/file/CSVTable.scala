@@ -23,6 +23,7 @@ import java.io.{InputStreamReader, BufferedInputStream, FileInputStream}
 import java.io.{OutputStreamWriter, BufferedOutputStream, FileOutputStream}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 
+import play.api.Logger
 
 import com.dataintoresults.etl.core.{DataSource, DataSink, Table, Column}
 import com.dataintoresults.etl.impl.ColumnBasic
@@ -34,9 +35,12 @@ import com.dataintoresults.etl.core.{EtlChilds, EtlTable, EtlParent, EtlParamete
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
 class CSVTable extends FlatFileTable {
+  private val logger = Logger(this.getClass)
 
   private val _columns = EtlChilds[ColumnBasic]()
   private val _location = EtlParameter[String](nodeAttribute="location", configAttribute="dw.datastore."+store.name+"."+name+".location")
+  private val _locationSeparator = EtlParameter[String](nodeAttribute="locationSeparator", 
+    configAttribute="dw.datastore."+store.name+"."+name+".locationSeparator", defaultValue="|")
   private val _locale = EtlParameter[String](nodeAttribute="locale", configAttribute="dw.datastore."+store.name+"."+name+".locale", defaultValue= "UTF-8")
   private val _compression = EtlParameter[String](nodeAttribute="compression", configAttribute="dw.datastore."+store.name+"."+name+".compression", defaultValue= "none")
   private val _delimiter = EtlParameter[String](nodeAttribute="delimiter", configAttribute="dw.datastore."+store.name+"."+name+".delimiter", defaultValue= "\t")
@@ -48,6 +52,7 @@ class CSVTable extends FlatFileTable {
   
 
   def location = _location.value
+  def locationSeparator = _locationSeparator.value
   def locale = _locale.value
   def compression = _compression.value
   def delimiter = _delimiter.value.head
@@ -66,7 +71,9 @@ class CSVTable extends FlatFileTable {
 	def canRead = true
 	
   def read() : DataSource = {
-    val filesList = FileStoreHelper.listFiles(store.location, location)
+    val filesList = FileStoreHelper.listFiles(store.location, location, locationSeparator)
+
+    logger.debug(s"${store.name}.${name}: Finding ${filesList.size} files that match the pattern ${store.location} + ${location}.")
 
     new DataSource {
       private var currentDataSource: DataSource = null
@@ -77,7 +84,9 @@ class CSVTable extends FlatFileTable {
       def hasNext: Boolean = {
         if(currentDataSource == null || !currentDataSource.hasNext) {
           if(fileIterator.hasNext) {
-            currentDataSource = nextDataSource(fileIterator.next)
+            val nextFile = fileIterator.next
+            logger.debug(s"${store.name}.${name}: Parsing ${nextFile.toString}.")
+            currentDataSource = nextDataSource(nextFile)
             currentDataSource.hasNext
           }
           else {

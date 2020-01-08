@@ -23,6 +23,15 @@ import scala.collection.JavaConverters._
 import java.util.regex._
 
 object FileStoreHelper {
+
+	/**
+	 * List file with a *basePath* and a set of *pattern* (pattern is a string where is pattern 
+	 * is separated by *patternSeparator*).
+	 */
+	def listFiles(basePath: String, pattern: String, patternSeparator: String): Seq[Path] = {
+		pattern.split(Pattern.quote(patternSeparator)).flatMap(p => listFiles(basePath, p))
+	}
+	
 	def listFiles(basePath: String, pattern: String): Seq[Path] = {
 		if(!pattern.contains("""*""")) {
 			// No pattern, simply return the file
