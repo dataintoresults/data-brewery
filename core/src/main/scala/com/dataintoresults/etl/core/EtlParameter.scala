@@ -145,10 +145,8 @@ class EtlParameter[T: EtlParameterType](
       case (Some(c), Some(a)) => 
         c.hasPath(a) match {
           case false => None
-          case true => {
-            Some(EtlParameterHelper.parse[T](c.getString(a)))
-          }
-        }
+          case true => Some(EtlParameterHelper.parse[T](c.getString(a)))
+        }        
     }
 
     val cdataValue = 
@@ -242,7 +240,7 @@ class EtlChilds[T <: EtlElement : TypeTag](minChilds: Int = 0, maxChilds:Int = I
     childs = node.toSeq.flatMap(n => n.descendant)
       .filter(_.label.equalsIgnoreCase(label))
       .map { n =>
-        factory.getOrElse(createInstance[T]).parse(node = n, parent = parent).asInstanceOf[T]
+        factory.getOrElse(createInstance[T]).parse(node = n, config = config, parent = parent).asInstanceOf[T]
       }
 
     if(childs.size < minChilds) {
