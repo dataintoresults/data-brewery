@@ -55,7 +55,7 @@ object FileStoreHelper {
 				}
 			})
 
-			solution
+			solution.sortBy(_.toString)
 			// level 1 Seq[Path] -> Seq[Path]
 			// flatMap
 		}
