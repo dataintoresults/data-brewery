@@ -24,6 +24,7 @@ import scala.xml.{Attribute, Elem, Node, Null}
 import com.typesafe.config.Config
 
 import play.api.libs.json.Json
+import play.api.Logger
 
 import com.dataintoresults.util.XmlHelper._
 
@@ -37,9 +38,36 @@ import scala.util.Try
 import com.dataintoresults.util.TimeHelper
 import java.time.LocalDateTime
 import com.dataintoresults.util.SlackHelper
+import scala.util.Success
 
 
 object ProcessRunner {
+  val logger: Logger = Logger(this.getClass())
+
+
+  def processTaskResult(task: Task, result: Try[Unit]): (ProcessResult.ProcessStatus, String) = {
+    result.fold(
+      ex => task.onError match {
+        case Task.OnErrorError =>  {
+          println(ex.getMessage() + ex.printStackTrace())
+          logger.error(task.name + " : " + ex.getMessage())
+          (ProcessResult.Error, ex.getMessage())
+        }
+        case Task.OnErrorWarning => {
+          logger.warn(task.name + " : " + ex.getMessage())
+          (ProcessResult.Warning, ex.getMessage())
+        }
+        case Task.OnErrorSuccess => {
+          logger.info(task.name + " : " + ex.getMessage())
+          (ProcessResult.Success, ex.getMessage())
+        }
+      },
+      v => {
+        (ProcessResult.Success, s"Task ${task.name} is a success")
+      }
+    )
+  }
+
   def run(etl: EtlImpl, processName: String): ProcessResult = {
     val process = etl.findProcess(processName)
     
@@ -60,40 +88,25 @@ object ProcessRunner {
         case Task.MODULE => {
           val startDate = LocalDateTime.now()
           etl.publish(Json.obj("process" -> processName, "step" -> "runModule", "module" -> task.module))
-          val (status, message) = Try(etl.runModule(task.module)).fold(
-            ex => task.onError match {
-              case Task.OnErrorError => shouldStop = true; (ProcessResult.Error, ex.getMessage())
-              case Task.OnErrorWarning => (ProcessResult.Warning, ex.getMessage())
-              case Task.OnErrorSuccess => (ProcessResult.Success, ex.getMessage())
-            },
-            v => (ProcessResult.Success, s"Task ${task.name} is a success")
-          )
+          val (status, message) = processTaskResult(task, Try(etl.runModule(task.module)))
+          if(status == ProcessResult.Error)
+            shouldStop = true
           ProcessResult(status, task, message, startDate, LocalDateTime.now(), Seq.empty)
         }
         case Task.DATASTORE => {
           val startDate = LocalDateTime.now()
           etl.publish(Json.obj("process" -> processName, "step" -> "runDatastore", "datastore" -> task.datastore))
-          val (status, message) = Try(etl.runDataStore(task.datastore)).fold(
-            ex => task.onError match {
-              case Task.OnErrorError => shouldStop = true; (ProcessResult.Error, ex.getMessage())
-              case Task.OnErrorWarning => (ProcessResult.Warning, ex.getMessage())
-              case Task.OnErrorSuccess => (ProcessResult.Success, ex.getMessage())
-            },
-            v => (ProcessResult.Success, s"Task ${task.name} is a success")
-          )
+          val (status, message) = processTaskResult(task, Try(etl.runDataStore(task.datastore)))
+          if(status == ProcessResult.Error)
+            shouldStop = true
           ProcessResult(status, task, message, startDate, LocalDateTime.now(), Seq.empty)
         }
         case Task.SHELL => {
           val startDate = LocalDateTime.now()
           etl.publish(Json.obj("process" -> processName, "step" -> "runShell", "shellCommand" -> task.shellCommand))
-          val (status, message) = Try(etl.runShellCommand(task.shellCommand, task.shellParameters)).fold(
-            ex => task.onError match {
-              case Task.OnErrorError => shouldStop = true; (ProcessResult.Error, ex.getMessage())
-              case Task.OnErrorWarning => (ProcessResult.Warning, ex.getMessage())
-              case Task.OnErrorSuccess => (ProcessResult.Success, ex.getMessage())
-            },
-            v => (ProcessResult.Success, s"Task ${task.name} is a success")
-          )
+          val (status, message) = processTaskResult(task, Try(etl.runShellCommand(task.shellCommand, task.shellParameters)))
+          if(status == ProcessResult.Error)
+            shouldStop = true
           ProcessResult(status, task, message, startDate, LocalDateTime.now(), Seq.empty)
         }
       }
@@ -120,6 +133,12 @@ object ProcessRunner {
       SlackHelper.post(process.slackWebhook.get, Json.parse(postText))
     }
 
+    result.status match {
+      case ProcessResult.Error => logger.error(s"${processName} : Ended with an error")
+      case ProcessResult.Warning => logger.warn(s"${processName} : Ended with a wanring")
+      case ProcessResult.Success => logger.info(s"${processName} : Ended successfuly")
+      case ProcessResult.Unprocessed => throw new RuntimeException("Internal error : A process ended with status Unprocessed. Please contact support.")
+    }
     etl.publish(Json.obj("process" -> processName, "step" -> "end"))
     
     result
