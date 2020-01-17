@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.googleSheet
+package com.dataintoresults.etl.datastore.googleSheets
 
 import scala.collection.JavaConversions._
 
@@ -71,18 +71,18 @@ import com.dataintoresults.etl.core.EtlParameterHelper._
 import com.dataintoresults.util.XmlHelper._
 import java.time.ZoneOffset
 
-class GoogleSheetStore extends EtlDatastore with DataStore {
+class GoogleSheetsStore extends EtlDatastore with DataStore {
   private val logger: Logger = Logger(this.getClass())
 	
 	private val _serviceAccountEmail = EtlParameter[String](nodeAttribute="serviceAccountEmail", configAttribute="dw.datastore."+name+".serviceAccountEmail")
 	private val _keyFileLocation = EtlParameter[String](nodeAttribute="keyFileLocation", configAttribute="dw.datastore."+name+".keyFileLocation")
-	private val _applicationName = EtlParameter[String](nodeAttribute="applicationName", configAttribute="dw.datastore."+name+".applicationName")
+	private val _applicationName = EtlParameter[String](nodeAttribute="applicationName", configAttribute="dw.datastore."+name+".applicationName", defaultValue = "Data Brewery")
 
 	def serviceAccountEmail = _serviceAccountEmail.value
 	def keyFileLocation = _keyFileLocation.value
 	def applicationName = _applicationName.value
 
-	private val _tables = EtlChilds[GoogleSheetTable]()
+	private val _tables = EtlChilds[GoogleSheetsTable]()
 
 	override def toString = s"GoogleSheetStore[${_name}]" 
 	
@@ -90,9 +90,9 @@ class GoogleSheetStore extends EtlDatastore with DataStore {
 
   def tables: Seq[Table] = _tables
   
-  def spreadsheet(name: String) : Option[GoogleSheetTable] = _tables.find(_.name == name)
+  def spreadsheet(name: String) : Option[GoogleSheetsTable] = _tables.find(_.name == name)
 	
-	def createDataSource(gsTable: GoogleSheetTable) : DataSource = {
+	def createDataSource(gsTable: GoogleSheetsTable) : DataSource = {
 	  val sheets = getConnection()
 	  
 	  val range = (if(gsTable.sheet.size > 0) "'" + gsTable.sheet + "'!" else "" ) + gsTable.colStart + ":" + lastColumn(gsTable)
@@ -163,7 +163,7 @@ class GoogleSheetStore extends EtlDatastore with DataStore {
 	
 	
 	
-	def createDataSink(gsTable: GoogleSheetTable) : DataSink = {
+	def createDataSink(gsTable: GoogleSheetsTable) : DataSink = {
 	  val sheets = getConnection()
 	  
 	  val range = (if(gsTable.sheet.size > 0) "'" + gsTable.sheet + "'!" else "" ) + gsTable.colStart + gsTable.rowStart
@@ -266,7 +266,7 @@ class GoogleSheetStore extends EtlDatastore with DataStore {
 	}
 	
 	
-	private def lastColumn(gsTable: GoogleSheetTable) : String = {
+	private def lastColumn(gsTable: GoogleSheetsTable) : String = {
 	  val firstColumn = gsTable.colStart
 	  
 	  (firstColumn.head + gsTable.columns.length -1).asInstanceOf[Char].toString
@@ -303,9 +303,9 @@ class GoogleSheetStore extends EtlDatastore with DataStore {
 }
 
 
-object GoogleSheetStore {
-	def fromXml(dsXml : scala.xml.Node, config: com.typesafe.config.Config) : GoogleSheetStore = {
-		val store = new GoogleSheetStore()
+object GoogleSheetsStore {
+	def fromXml(dsXml : scala.xml.Node, config: com.typesafe.config.Config) : GoogleSheetsStore = {
+		val store = new GoogleSheetsStore()
 		store.parse(dsXml, config)
 		store
 	}

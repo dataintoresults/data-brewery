@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.googleSearchConsole
+package com.dataintoresults.etl.datastore.googleSearch
 
 import java.io.File
 import java.util.Arrays
@@ -42,19 +42,28 @@ import com.dataintoresults.etl.impl.ColumnBasic
 
 class GoogleSearchTable extends EtlTable with Table {
 
+  val _parent = EtlParent[GoogleSearchStore]()
+
   var gsColumns  = EtlChilds[GoogleSearchColumn]()
 
-  private val _property = EtlParameter[String](nodeAttribute = "property")
-  private val _startDate = EtlParameter[String](nodeAttribute = "startDate")
-  private val _endDate = EtlParameter[String](nodeAttribute = "endDate")
+  private val _property = EtlParameter[String](nodeAttribute = "property", configAttribute="dw.datastore."+store.name+"."+name+".property", defaultValue = Some(null))
+  private val _startDate = EtlParameter[String](nodeAttribute = "startDate", configAttribute="dw.datastore."+store.name+"."+name+".startDate")
+  private val _endDate = EtlParameter[String](nodeAttribute = "endDate", configAttribute="dw.datastore."+store.name+"."+name+".endDate")
 
-  def property = _property.value
+  def property: String = {
+    if(_property.value == null || _property.value == "") {
+      store.property match {
+        case Some(p) => p
+        case None => throw new RuntimeException(s"Table ${store.name}.${name} doesn't have a property attribute (and neither ${store.name}).")
+      }
+    }
+    else _property.value
+  }
   def startDate = _startDate.value
   def endDate = _endDate.value
 
   def columns = gsColumns
 
-  val _parent = EtlParent[GoogleSearchStore]()
 
   def store = _parent.get
 

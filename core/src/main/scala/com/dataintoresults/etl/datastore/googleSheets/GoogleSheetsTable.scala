@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.googleSheet
+package com.dataintoresults.etl.datastore.googleSheets
 
 import java.io.File
 import java.util.Arrays
@@ -49,13 +49,13 @@ import com.dataintoresults.etl.core.{EtlTable, EtlParent, EtlChilds, EtlOptional
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
 
-class GoogleSheetTable extends EtlTable with Table {
+class GoogleSheetsTable extends EtlTable with Table {
 
   private final val defaultRowStart = "2" // start at 2 to take in account an header
   private final val defaultColStart = "A" // start at A
   private final val defaultSheet = "" // landing sheet
 
-  private val _parent = EtlParent[GoogleSheetStore]()
+  private val _parent = EtlParent[GoogleSheetsStore]()
 
   private val _spreadsheetId = EtlParameter[String](nodeAttribute = "spreadsheetId", configAttribute = "dw.datastore."+name+".spreadsheetId")
   private var _sheet = EtlParameter[String](nodeAttribute = "sheet", configAttribute = "dw.datastore."+name+".sheet", defaultValue = defaultSheet)

@@ -49,11 +49,21 @@ class GoogleAnalyticsTable extends EtlTable with Table {
 
   private val _parent = EtlParent[GoogleAnalyticsStore]()
   private val _gaColumns = EtlChilds[GoogleAnalyticsColumn]()
+  private val _viewId = EtlParameter[String](nodeAttribute="viewId", configAttribute="dw.datastore."+store.name+"."+name+".viewId", defaultValue = Some(null))
   private val _startDate = EtlParameter[String](nodeAttribute="startDate", configAttribute="dw.datastore."+store.name+"."+name+".startDate", defaultValue="7daysAgo")
   private val _endDate = EtlParameter[String](nodeAttribute="endDate", configAttribute="dw.datastore."+store.name+"."+name+".endDate", defaultValue="yesterday")
 
   def store = _parent.get
   def gaColumns = _gaColumns
+  def viewId : String = {
+    if(_viewId.value == null || _viewId.value == "") {
+      store.viewId match {
+        case Some(id) => id
+        case None => throw new RuntimeException(s"Table ${store.name}.${name} doesn't have a viewId (and neither ${store.name}).")
+      }
+    }
+    else _viewId.value
+  }
   def startDate = _startDate.value
   def endDate = _endDate.value
 

@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.googleSearchConsole
+package com.dataintoresults.etl.datastore.googleSearch
 
 import java.io.File
 import java.io.IOException

@@ -39,7 +39,7 @@ import com.dataintoresults.etl.impl.source._
 import com.dataintoresults.etl.impl.process._
 import com.dataintoresults.etl.datastore.file.FileStore
 import com.dataintoresults.etl.datastore.googleAnalytics.GoogleAnalyticsStore
-import com.dataintoresults.etl.datastore.googleSheet.GoogleSheetStore
+import com.dataintoresults.etl.datastore.googleSheets.GoogleSheetsStore
 import com.dataintoresults.etl.datastore.sftp.SftpStore
 import com.dataintoresults.etl.datastore.sql.SqlStore
 import com.dataintoresults.etl.datastore.sql.SqlTable
@@ -49,7 +49,7 @@ import com.dataintoresults.etl.datastore.sql.MsSqlStore
 import com.dataintoresults.etl.datastore.sql.H2Store
 import com.dataintoresults.etl.datastore.odoo.OdooStore
 import com.dataintoresults.etl.datastore.hubspot.HubspotStore
-import com.dataintoresults.etl.datastore.googleSearchConsole.GoogleSearchStore
+import com.dataintoresults.etl.datastore.googleSearch.GoogleSearchStore
 import com.dataintoresults.etl.datastore.mongodb.MongoDbStore
 import com.dataintoresults.etl.datastore.http.HttpStore
 import com.dataintoresults.etl.datastore.bitmovin.BitmovinStore
@@ -605,8 +605,8 @@ class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,
 			case "mongodb" => MongoDbStore.fromXml(dsXml, config)
 			case "sftp" => SftpStore.fromXml(dsXml, config)
 			case "googleAnalytics" => GoogleAnalyticsStore.fromXml(dsXml, config)
-			case "googleSheet" => GoogleSheetStore.fromXml(dsXml, config)
-			case "googleSearchConsole" => GoogleSearchStore.fromXml(dsXml, config)
+			case "googleSheets" => GoogleSheetsStore.fromXml(dsXml, config)
+			case "googleSearch" => GoogleSearchStore.fromXml(dsXml, config)
 			case "http" => HttpStore.fromXml(dsXml, config)
 			case "odoo" => OdooStore.fromXml(dsXml, config)
 			case "hubspot" => HubspotStore.fromXml(dsXml, config)

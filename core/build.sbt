@@ -23,14 +23,11 @@ libraryDependencies ++= Seq(
   // JSON stuff
   "com.google.code.gson" % "gson" % "2.8.5",
 
-  "com.google.apis" % "google-api-services-analyticsreporting" % "v4-rev109-1.22.0",  
-  "com.google.apis" % "google-api-services-sheets" % "v4-rev468-1.22.0",
-  "com.google.oauth-client" % "google-oauth-client" % "1.22.0",
-  "com.google.oauth-client" % "google-oauth-client-java6" % "1.22.0",
-  "com.google.oauth-client" % "google-oauth-client-jetty" % "1.22.0",
-  "com.google.http-client" % "google-http-client-gson" % "1.19.0",
-
-  "com.google.apis" % "google-api-services-webmasters" % "v3-rev34-1.25.0",
+  "com.google.apis" % "google-api-services-analyticsreporting" % "v4-rev170-1.25.0",
+  "com.google.apis" % "google-api-services-sheets" % "v4-rev604-1.25.0",
+  "com.google.apis" % "google-api-services-webmasters" % "v3-rev35-1.25.0",
+  "com.google.oauth-client" % "google-oauth-client" % "1.30.5",
+  "com.google.http-client" % "google-http-client-gson" % "1.34.0",
   
   "fr.janalyse"   %%  "janalyse-ssh" % "0.10.3" % "compile",
   

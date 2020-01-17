@@ -16,7 +16,7 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.googleSearchConsole
+package com.dataintoresults.etl.datastore.googleSearch
 
 import java.io.File
 import java.io.IOException
@@ -52,13 +52,15 @@ class GoogleSearchStore extends EtlDatastore with DataStore {
 
   private val _tables = EtlChilds[GoogleSearchTable]()
 
+  private val _property = EtlParameter[String](nodeAttribute = "property", configAttribute="dw.datastore."+name+".property", defaultValue = Some(null))
 	private val _serviceAccountEmail = EtlParameter[String](nodeAttribute="serviceAccountEmail", configAttribute="dw.datastore."+name+".serviceAccountEmail")
 	private val _keyFileLocation = EtlParameter[String](nodeAttribute="keyFileLocation", configAttribute="dw.datastore."+name+".keyFileLocation")
-	private val _applicationName = EtlParameter[String](nodeAttribute="applicationName", configAttribute="dw.datastore."+name+".applicationName")
+	private val _applicationName = EtlParameter[String](nodeAttribute="applicationName", configAttribute="dw.datastore."+name+".applicationName", defaultValue = "Data Brewery")
 
 	def serviceAccountEmail = _serviceAccountEmail.value
 	def keyFileLocation = _keyFileLocation.value
 	def applicationName = _applicationName.value
+	def property = if(_property.value == null || _property.value == "") None else Some(_property.value)
 
 
   override def toString = s"GoogleSearchStore[${name}]"

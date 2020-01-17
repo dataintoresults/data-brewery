@@ -60,16 +60,16 @@ class GoogleAnalyticsStore extends EtlDatastore with DataStore {
 	private val _serviceAccountEmail = EtlParameter[String](nodeAttribute="serviceAccountEmail", configAttribute="dw.datastore."+name+".serviceAccountEmail")
 	private val _keyFileLocation = EtlParameter[String](nodeAttribute="keyFileLocation", configAttribute="dw.datastore."+name+".keyFileLocation")
 	private val _applicationName = EtlParameter[String](nodeAttribute="applicationName", configAttribute="dw.datastore."+name+".applicationName", defaultValue="Data Brewery")
-	private val _viewId = EtlParameter[String](nodeAttribute="viewId", configAttribute="dw.datastore."+name+".viewId")
+	private val _viewId = EtlParameter[String](nodeAttribute="viewId", configAttribute="dw.datastore."+name+".viewId", defaultValue = Some(null))
 
 	def serviceAccountEmail = _serviceAccountEmail.value
 	def keyFileLocation = _keyFileLocation.value
 	def applicationName = _applicationName.value
-	def viewId = _viewId.value
+	def viewId = if(_viewId.value == null || _viewId.value == "") None else Some(_viewId.value)
 
 	def tables() : Seq[Table] = _tables
 
-	override def toString = s"GoogleAnalyticsStore[${name},${viewId}]"
+	override def toString = s"GoogleAnalyticsStore[${name}]"
 	
 	def createDataSource(gaTable: GoogleAnalyticsTable) : DataSource = {
 	  
@@ -79,7 +79,7 @@ class GoogleAnalyticsStore extends EtlDatastore with DataStore {
 
 		service.connectAsServiceAccount(serviceAccountEmail, keyFileLocation, applicationName)
 
-		val iterator = service.query(viewId, 
+		val iterator = service.query(gaTable.viewId, 
 			gaTable.gaColumns.filter(_.gaType == "measure").map(_.gaName),			
 			gaTable.gaColumns.filter(_.gaType == "dimension").map(_.gaName),
 			gaTable.startDate, gaTable.endDate)

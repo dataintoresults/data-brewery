@@ -16,35 +16,31 @@
  *
  ******************************************************************************/
 
-package com.dataintoresults.etl.datastore.googleSearchConsole
+package com.dataintoresults.etl.datastore.googleSearch
 
 import com.dataintoresults.etl.core.{Column, EtlColumn, EtlParameter}
 import com.dataintoresults.etl.core.EtlParameterHelper._
 import com.dataintoresults.etl.impl.ColumnBasic
 
 class GoogleSearchColumn extends ColumnBasic  {
-  val _gsName = EtlParameter[String](nodeAttribute = "gsName")
-  def gsName = _gsName.value()
-  val _gsType = EtlParameter[String](nodeAttribute = "gsType", defaultValue = "")
-  def gsType = _gsType.value()
+  val _gsName = EtlParameter[String](nodeAttribute = "gsName", defaultValue = Some(null))
+
+  def gsName = if(_gsName.value == null || _gsName.value == "") name else _gsName.value
 
 
-  def this(column: Column, gsName: String, gsType: String) = {
+  def this(column: Column, gsName: String) = {
     this()
-    set(column.name, column.colType, gsName, gsType)
+    set(column.name, column.colType, gsName)
   }
 
-  def this(name: String, colType: String, gsName: String, gsType: String) = {
+  def this(name: String, colType: String, gsName: String) = {
     this()
-    set(name, colType, gsName, gsType)
+    set(name, colType, gsName)
   }
 
-  def set(name: String, colType: String, gsName: String, gsType: String) = {
+  def set(name: String, colType: String, gsName: String) = {
     super.set(name, colType)
     _gsName.value(gsName)
-    _gsType.value(gsType)
   }
-
-
 
 }
