@@ -49,7 +49,6 @@ object ProcessRunner {
     result.fold(
       ex => task.onError match {
         case Task.OnErrorError =>  {
-          println(ex.getMessage() + ex.printStackTrace())
           logger.error(task.name + " : " + ex.getMessage())
           (ProcessResult.Error, ex.getMessage())
         }
