@@ -57,10 +57,10 @@ class GoogleSheetsTable extends EtlTable with Table {
 
   private val _parent = EtlParent[GoogleSheetsStore]()
 
-  private val _spreadsheetId = EtlParameter[String](nodeAttribute = "spreadsheetId", configAttribute = "dw.datastore."+name+".spreadsheetId")
-  private var _sheet = EtlParameter[String](nodeAttribute = "sheet", configAttribute = "dw.datastore."+name+".sheet", defaultValue = defaultSheet)
-  private var _colStart = EtlParameter[String](nodeAttribute = "colStart", configAttribute = "dw.datastore."+name+".colStart", defaultValue = defaultColStart)
-  private var _rowStart = EtlParameter[String](nodeAttribute = "rowStart", configAttribute = "dw.datastore."+name+".rowStart", defaultValue = defaultRowStart)
+  private val _spreadsheetId = EtlParameter[String](nodeAttribute = "spreadsheetId", configAttribute = "dw.datastore."+store.name+"."+name+".spreadsheetId")
+  private var _sheet = EtlParameter[String](nodeAttribute = "sheet", configAttribute = "dw.datastore."+store.name+"."+name+".sheet", defaultValue = defaultSheet)
+  private var _colStart = EtlParameter[String](nodeAttribute = "colStart", configAttribute = "dw.datastore."+store.name+"."+name+".colStart", defaultValue = defaultColStart)
+  private var _rowStart = EtlParameter[String](nodeAttribute = "rowStart", configAttribute = "dw.datastore."+store.name+"."+name+".rowStart", defaultValue = defaultRowStart)
 
   private var _columns = EtlChilds[ColumnBasic]()
   
