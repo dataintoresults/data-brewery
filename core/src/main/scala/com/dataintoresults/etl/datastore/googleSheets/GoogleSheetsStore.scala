@@ -277,7 +277,7 @@ class GoogleSheetsStore extends EtlDatastore with DataStore {
         // Check that the target is big enough
         //AppendDimensionRequest
 
-        logger.debug("Google Sheet: close DataSink")
+        logger.debug("Google Sheet: close DataSink (actually write the data)")
               
         val requests = new java.util.ArrayList[Request]();
 
