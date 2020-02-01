@@ -606,8 +606,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   protected def jdbcType2EtlType(sqlType: Int, size: Int, decimals: Int) : String = {
     try  {
       jdbcType2EtlTypeMap(JDBCType.valueOf(sqlType)) match {
-        case "text" if size >= 256 => "bigtext"
-        case "numeric" if size > 0 &&size < 10 && decimals == 0 => "int"
+        case "text" if size > 256 => "bigtext"
+        case "numeric" if size > 0 && size < 10 && decimals == 0 => "int"
         case "numeric" if size > 0 && size < 19 && decimals == 0 => "bigint"
         case x => x
       }
