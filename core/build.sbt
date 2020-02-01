@@ -10,7 +10,10 @@ libraryDependencies ++= Seq(
   "mysql" % "mysql-connector-java" % "8.0.17",
   "com.h2database" % "h2" % "1.4.199",
   "com.microsoft.sqlserver" % "mssql-jdbc" % "6.4.0.jre8",
-  "org.mongodb.scala" %% "mongo-scala-driver" % "2.2.1",
+  "org.mongodb.scala" %% "mongo-scala-driver" % "2.2.1",// https://mvnrepository.com/artifact/com.oracle/ojdbc8
+  "com.oracle.ojdbc" % "ojdbc8" % "19.3.0.0",
+  "com.sap.cloud.db.jdbc" % "ngdbc" % "2.4.67",
+
   
   "commons-io" % "commons-io" % "2.6",
 

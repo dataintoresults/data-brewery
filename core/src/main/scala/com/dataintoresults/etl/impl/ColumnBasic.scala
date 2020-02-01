@@ -49,17 +49,14 @@ class ColumnBasic extends EtlElement("column") with Column {
 		else if(colType.startsWith("boolean")) Column.BOOLEAN;
 		else if(colType.equals("int"))  Column.INT;
 		else if(colType.equals("bigint")) Column.BIGINT;
-		else if(colType.startsWith("varchar")) Column.TEXT;
-		else if(colType.startsWith("string")) Column.TEXT;
 		else if(colType.startsWith("text")) Column.TEXT;
 		else if(colType.startsWith("bigtext")) Column.BIGTEXT;
 		else if(colType.startsWith("numeric")) Column.NUMERIC;
 		else if(colType.equals("date")) Column.DATE;
 		else if(colType.equals("datetime")) Column.DATETIME;
-		else if(colType.equals("timestamp")) Column.DATETIME;
 		else if(colType.equals("ident")) Column.INT;
 		else if(colType.equals("bigident")) Column.BIGINT;
-		else if(colType.equals("double")) Column.NUMERIC;
+		else if(colType.equals("double")) Column.DOUBLE;
 		else if(colType.equals("validityStartTimestamp")) Column.DATETIME;
 		else if(colType.equals("validityEndTimestamp")) Column.DATETIME;
 		else if(colType.equals("creationTimestamp")) Column.DATETIME;
@@ -70,7 +67,13 @@ class ColumnBasic extends EtlElement("column") with Column {
 			throw new RuntimeException("Column "+name+" unknown type : " +colType);
 	}
 
-  
+  def legacyConvert(tpe: String): String = {
+		tpe match {
+			case "string" => "bigtext"
+			case "varchar" => "text"
+			case "timestamp" => "datetime"
+		}
+	}
   
 	def this(name: String, colType: String) = {
 	  this()
@@ -148,11 +151,13 @@ class ColumnBasic extends EtlElement("column") with Column {
 object ColumnBasic {
   def columnTypeFromScalaType[T: TypeTag]: String = {
     typeOf[T] match { 
-      case t if t =:= typeOf[String] => "string"
+      case t if t =:= typeOf[String] => "text"
       case t if t =:= typeOf[Long] => "bigint"
       case t if t <:< typeOf[scala.runtime.RichLong] => "bigint"
       case t if t <:< typeOf[Int] => "int"
       case t if t <:< typeOf[scala.runtime.RichInt] => "int"
+      case t if t =:= typeOf[Float] => "double"
+      case t if t <:< typeOf[scala.runtime.RichFloat] => "double"
       case t if t =:= typeOf[Double] => "double"
       case t if t <:< typeOf[scala.runtime.RichDouble] => "double"
       case t if t =:= typeOf[java.math.BigDecimal] => "numeric"

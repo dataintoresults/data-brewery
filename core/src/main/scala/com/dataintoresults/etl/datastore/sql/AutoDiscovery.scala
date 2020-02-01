@@ -25,11 +25,11 @@ import com.dataintoresults.etl.core.EtlParameterHelper._
  * Contains a schema to be automatically parsed and which table will be 
  * added to the parent SQL datastore.
  */
-class AutoDiscovery extends EtlElement(AutoDiscovery.label) {	
-	private val _schema = EtlParameter[String](nodeAttribute="schema")
-	def schema = _schema.value
+class AutoDiscovery extends EtlElement(AutoDiscovery.label) {  
+  private val _schema = EtlParameter[String](nodeAttribute="schema")
+  def schema = _schema.value
 }
 
 object AutoDiscovery {
-	def label = "autoDiscovery"
+  def label = "autoDiscovery"
 }

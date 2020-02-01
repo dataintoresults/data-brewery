@@ -29,16 +29,16 @@ import com.dataintoresults.etl.impl.EtlImpl
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
 class MsSqlStore extends SqlStore {
-	
- 	def sqlType = "mssql"
-	def jdbcDriver : String = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-	def jdbcUrl : String = createJdbcUrl(host, port, database)
-	
-	
-	def createJdbcUrl(host: String, port: String, database: String) : String = 
-	  s"jdbc:sqlserver://${host}:${port};databaseName=${database}"
-	
- 	override def toString = s"MsSqlStore[${name},${host},${user},${password}]"
+  
+   def sqlType = "mssql"
+  def jdbcDriver : String = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+  def jdbcUrl : String = createJdbcUrl(host, port, database)
+  
+  
+  def createJdbcUrl(host: String, port: String, database: String) : String = 
+    s"jdbc:sqlserver://${host}:${port};databaseName=${database}"
+  
+   override def toString = s"MsSqlStore[${name},${host},${user},${password}]"
 
   override def convertToSqlType(colType: String): String = {
     super.convertToSqlType(colType) match {
@@ -48,34 +48,22 @@ class MsSqlStore extends SqlStore {
     }
   }
   
+  override def defaultPort = "1433"
   
-	override protected def jdbcType2EtlType(sqlType: Int, size: Int) : String= {
-	  var direct = super.jdbcType2EtlType(sqlType, size)
-	  
-	  /* MySQL limits row size at 65k using the max declared for each varchar.
-	   * Therefore if it's bigger that 256 we use text. Sound like a good tradeoff */
-	  if(direct == "varchar" && size > 256) 
-	    direct = "text"
-	    	    
-	  direct
-	}
-      
-	override def defaultPort = "1433"
-	
-	override def columnEscapeStart = "[" 
-	override def columnEscapeEnd = "]" 
-	
-	override def tableEscapeStart = "[" 
+  override def columnEscapeStart = "[" 
+  override def columnEscapeEnd = "]" 
+  
+  override def tableEscapeStart = "[" 
   override def tableEscapeEnd = "]" 
   
-	override def schemaEscapeStart = "[" 
-	override def schemaEscapeEnd = "]" 
+  override def schemaEscapeStart = "[" 
+  override def schemaEscapeEnd = "]" 
 }
 
 object MsSqlStore {
-	def fromXml(config: Config, etl: EtlImpl, dsXml : scala.xml.Node) : DataStore = {
-		val store = new MsSqlStore()
-		store.parse(dsXml, config)
-		store
-	}
+  def fromXml(config: Config, etl: EtlImpl, dsXml : scala.xml.Node) : DataStore = {
+    val store = new MsSqlStore()
+    store.parse(dsXml, config)
+    store
+  }
 }

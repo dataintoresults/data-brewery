@@ -61,6 +61,9 @@ import com.dataintoresults.util.XmlHelper._
 import javax.transaction.NotSupportedException
 
 import com.dataintoresults.etl.core.Column.BasicType
+import _root_.java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
      
      
@@ -227,12 +230,15 @@ class MongoDbStore  extends EtlDatastore with DataStore {
 		            if(bson.isBoolean()) bson.asBoolean().getValue
 		            else throw new RuntimeException(s"Expecting BOOLEAN but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
 		          case Column.DATE => 
-		            if(bson.isDateTime()) new java.util.Date(bson.asDateTime().getValue)
+		            if(bson.isDateTime()) LocalDateTime.ofInstant(Instant.ofEpochMilli(bson.asDateTime().getValue), ZoneId.of("UTC")).toLocalDate
 		            else throw new RuntimeException(s"Expecting DATE but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
 		          case Column.INT => 
 		            if(bson.isInt32()) bson.asInt32().getValue
 		            else throw new RuntimeException(s"Expecting INT but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
 		          case Column.LAZY => throw new RuntimeException(s"lazy type is not supported for MongoDb datasources location ${_name}.${table.name}")
+		          case Column.DOUBLE => 
+		            if(bson.isNumber()) bson.asDouble().getValue
+		            else throw new RuntimeException(s"Expecting DOUBLE but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
 		          case Column.NUMERIC => 
 		            if(bson.isNumber()) bson.asNumber().decimal128Value().bigDecimalValue()
 		            else throw new RuntimeException(s"Expecting NUMERIC but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
@@ -241,8 +247,8 @@ class MongoDbStore  extends EtlDatastore with DataStore {
 		            else if(bson.isDocument()) bson.asDocument().toJson()
 		            else throw new RuntimeException(s"Expecting STRING but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
 		          case Column.DATETIME => 
-		            if(bson.isDateTime()) new java.util.Date(bson.asDateTime().getValue)
-		            else throw new RuntimeException(s"Expecting TIMESTAMP but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
+		            if(bson.isDateTime()) LocalDateTime.ofInstant(Instant.ofEpochMilli(bson.asDateTime().getValue), ZoneId.of("UTC"))
+		            else throw new RuntimeException(s"Expecting DATETIME but getting ${bson.getBsonType.name()} for ${_name}.${table.name}.${col.name}")
 		          case Column.BIGTEXT => 
 		            if(bson.isString()) bson.asString().getValue
 		            else if(bson.isDocument()) bson.asDocument().toJson()

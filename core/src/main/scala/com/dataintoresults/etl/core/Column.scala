@@ -26,102 +26,110 @@ package com.dataintoresults.etl.core
  */
 trait Column extends Comparable[Column] {
       
-	/**
-	 * Returns the name of the column.
-	 */
+  /**
+   * Returns the name of the column.
+   */
   def name: String
   
-	/**
-	 * Returns the detailed type of the column.
-	 */
+  /**
+   * Returns the detailed type of the column.
+   */
   def colType: String
   
-	/**
-	 * Returns the generic type of the column, generally 
-	 * infered from colType.
-	 */
-	def basicType : Column.BasicType	
-	
-	/**
-	 * Returns an XML representation of this column definition.
-	 */
+  /**
+   * Returns the generic type of the column, generally 
+   * infered from colType.
+   */
+  def basicType : Column.BasicType  
+  
+  /**
+   * Returns an XML representation of this column definition.
+   */
   def toXml() : scala.xml.Node
   
-	/**
-	 * Convert any string value to the underlying data representation of this colulmn.
-	 */
+  /**
+   * Convert any string value to the underlying data representation of this colulmn.
+   */
   def fromString(s: String): Any
   
-	/**
-	 * Convert an underlying data representation to a string.
-	 */
+  /**
+   * Convert an underlying data representation to a string.
+   */
   def toString(a: Any): String
 }
 
 object Column {  
-	sealed trait BasicType
+  sealed trait BasicType
 
-	/**
-	 * Variant types are used when the underlying type can change over type.
-	 * Unexpected behavior for now.
-	 */
-	case object VARIANT extends BasicType
+  /**
+   * Variant types are used when the underlying type can change over type.
+   * Unexpected behavior for now.
+   */
+  case object VARIANT extends BasicType
 
-	/**
-	 * Lazy types are placeholder when the real type is not yet known.
-	 * Used for internal usage.
-	 */
-	case object LAZY extends BasicType
+  /**
+   * Lazy types are placeholder when the real type is not yet known.
+   * Used for internal usage.
+   */
+  case object LAZY extends BasicType
 
-	/**
-	 * Boolean types are either true or false (string representation 'true' and 'false')
-	 * Know types : boolean
-	 */
-	case object BOOLEAN extends BasicType
+  /**
+   * Boolean types are either true or false (string representation 'true' and 'false')
+   * Know types : boolean
+   */
+  case object BOOLEAN extends BasicType
 
-	/**
+  /**
    * Integer types are signed finites numbers between -2^31 and +2^31 (around 2 billions).
-	 * Know types : int
-	 */
-	case object INT extends BasicType
+   * Know types : int
+   */
+  case object INT extends BasicType
 
-	/**
+  /**
    * Integer types are signed finites numbers between -2^63 and +2^63.
-	 * Know types : bigint
-	 */
-	case object BIGINT extends BasicType
-	
-	/**
+   * Know types : bigint
+   */
+  case object BIGINT extends BasicType
+  
+  /**
    * Text types that are expected to be shorts.
-	 * The short definition is backend dependant, 
-	 * but a safe bet is below 255 characters. 
-	 * Know types : text, varchar (legacy)
-	 */
-	case object TEXT extends BasicType
+   * The short definition is backend dependant, 
+   * but a safe bet is below 255 characters. 
+   * Know types : text
+   */
+  case object TEXT extends BasicType
 
-	/**
+  /**
    * Big Text types that are long chunks of text.
-	 */
-	case object BIGTEXT extends BasicType
-	
-	/**
+   */
+  case object BIGTEXT extends BasicType
+  
+  /**
    * Numeric types (non finites).
-	 * Known types : float, double, decimal
-	 */
-	case object NUMERIC extends BasicType
-	
-	/**
+   * Known types : decimal
+   * Internally represented as java.math.BigDecimal
+   */
+  case object NUMERIC extends BasicType
+  
+  /**
+   * Floating point number
+   * Known types : double
+   * Internally represented as Double
+   */
+  case object DOUBLE extends BasicType
+  
+  /**
    * Dates types (without intradays informations).
-	 * Known types : date
-	 * Internaly represented as java.time.LocalDate
-	 */
-	case object DATE extends BasicType
+   * Known types : date
+   * Internaly represented as java.time.LocalDate
+   */
+  case object DATE extends BasicType
 
-	/**
+  /**
    * Dates types (with intradays informations).
-	 * The timezone information is not expected, and by convention it is UTC.
-	 * Known types : datetime, creationTimestamp, updateTimestamp
-	 * Internaly represented as java.time.LocalDateTime
-	 */
-	case object DATETIME extends BasicType
+   * The timezone information is not expected, and by convention it is UTC.
+   * Known types : datetime, creationTimestamp, updateTimestamp
+   * Internaly represented as java.time.LocalDateTime
+   */
+  case object DATETIME extends BasicType
 }

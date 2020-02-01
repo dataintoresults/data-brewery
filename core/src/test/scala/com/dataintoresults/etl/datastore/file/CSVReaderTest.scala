@@ -29,7 +29,7 @@ import com.dataintoresults.etl.util.EtlHelper
 class CSVReaderTest extends FunSuite {
   test("Parsing a TSV file (should be with default config)") {
     val reader = new StringReader("a\tb\naaa\t3\nbbb\t6")
-    val structure = Array(new ColumnBasic("c1", "string"), new ColumnBasic("c2","int"))
+    val structure = Array(new ColumnBasic("c1", "text"), new ColumnBasic("c2","int"))
     val parser = CSVReader(columns = structure)
 
     assertResult("c1, c2\naaa, 3\nbbb, 6\n") {
@@ -39,7 +39,7 @@ class CSVReaderTest extends FunSuite {
 
   test("Parsing a TSV file with no header") {
     val reader = new StringReader("aaa\tbbb\n3\t6")
-    val structure = Array(new ColumnBasic("c1", "string"), new ColumnBasic("c2","string"))
+    val structure = Array(new ColumnBasic("c1", "text"), new ColumnBasic("c2","text"))
     val parser = CSVReader(columns = structure, header = false)
     
     assertResult("c1, c2\naaa, bbb\n3, 6\n") {
@@ -49,7 +49,7 @@ class CSVReaderTest extends FunSuite {
   
   test("Parsing a CSV file") {
     val reader = new StringReader("a,b\naaa,bbb\n3,6")
-    val structure = Array(new ColumnBasic("c1", "string"), new ColumnBasic("c2","string"))
+    val structure = Array(new ColumnBasic("c1", "text"), new ColumnBasic("c2","text"))
     val parser = CSVReader(columns = structure, delimiter = ',')
     
     assertResult("c1, c2\naaa, bbb\n3, 6\n") {
@@ -63,7 +63,7 @@ class CSVReaderTest extends FunSuite {
 aaa,"b,bb"
 3,6
 """)
-    val structure = Array(new ColumnBasic("c1", "string"), new ColumnBasic("c2","string"))
+    val structure = Array(new ColumnBasic("c1", "text"), new ColumnBasic("c2","text"))
     val parser = CSVReader(columns = structure, delimiter = ',')
     
     assertResult("c1, c2\naaa, b,bb\n3, 6\n") {
@@ -73,7 +73,7 @@ aaa,"b,bb"
   
   test("Handling quote in quoted cell") {
     val reader = new StringReader("a,b\naaa,\"b\\\"bb\"\n3,6\n")
-    val structure = Array(new ColumnBasic("c1", "string"), new ColumnBasic("c2","string"))
+    val structure = Array(new ColumnBasic("c1", "text"), new ColumnBasic("c2","text"))
     val parser = CSVReader(columns = structure, delimiter = ',')
     
     assertResult("c1, c2\naaa, b\"bb\n3, 6\n") {

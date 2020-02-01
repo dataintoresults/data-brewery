@@ -29,43 +29,43 @@ import com.dataintoresults.etl.core.{EtlTable, EtlParameter, EtlChilds, EtlParen
 import com.dataintoresults.etl.core.EtlParameterHelper._
 
 class SqlTable extends EtlTable with Table {
-	private val _store = EtlParent[SqlStore]()
+  private val _store = EtlParent[SqlStore]()
 
- 	private val _schema = EtlParameter[String](nodeAttribute="schema", defaultValue="")
+   private val _schema = EtlParameter[String](nodeAttribute="schema", defaultValue="")
 
-	private val _columns = EtlChilds[ColumnBasic]()
+  private val _columns = EtlChilds[ColumnBasic]()
 
- 	def store = _store.get
- 	def schema = _schema.value 	 	
- 	def columns : Seq[Column] = _columns.value
+   def store = _store.get
+   def schema = _schema.value      
+   def columns : Seq[Column] = _columns.value
 
-	def this(store: SqlStore, name: String, schema: String, columns: Seq[ColumnBasic]) = {
-		this()
-		_store.set(store)
-		_name.set(name)
-		_schema.set(schema)
-		_columns.set(columns)
-	}
+  def this(store: SqlStore, name: String, schema: String, columns: Seq[ColumnBasic]) = {
+    this()
+    _store.set(store)
+    _name.set(name)
+    _schema.set(schema)
+    _columns.set(columns)
+  }
 
- 	override def toString = s"SqlTable[${name},${schema}]"
- 	 	 	
-	def canRead = true
-	
+   override def toString = s"SqlTable[${name},${schema}]"
+         
+  def canRead = true
+  
   def read() : DataSource = store.createDataSource(this)
-	
-	def canWrite = true
-	
-	def write() : DataSink = store.createDataSink(this)
-	
-	
+  
+  def canWrite = true
+  
+  def write() : DataSink = store.createDataSink(this)
+  
+  
   def dropTableIfExists() : Table = {
-	  store.dropTableIfExists(schema, name)
-	  this
+    store.dropTableIfExists(schema, name)
+    this
   }
 
   def createTable() : Table = {
     store.createTable(schema, name, columns)
-	  this
+    this
   }
 
 }
