@@ -318,7 +318,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
       val sqlSize = rs.getPrecision(i)
       val sqlDecimals = rs.getScale(i)
       val colType = jdbcType2EtlType(sqlType, sqlSize, sqlDecimals)
-      println(s"$name : ${rs.getColumnTypeName(i)}($sqlType)/$sqlSize/$sqlDecimals => $colType")
+      //println(s"$name : ${rs.getColumnTypeName(i)}($sqlType)/$sqlSize/$sqlDecimals => $colType")
       new ColumnBasic(name, colType)
     }
   }
