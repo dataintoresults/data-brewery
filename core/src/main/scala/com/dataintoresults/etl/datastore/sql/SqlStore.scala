@@ -66,6 +66,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   // Conversion of java.sql.Types to their bicloud counterpart (not complete)
   // List https://github.com/AdoptOpenJDK/openjdk-jdk11/blob/master/src/java.sql/share/classes/java/sql/Types.java
   private val jdbcType2EtlTypeMap = Map(
+    JDBCType.BIT -> "text",
     JDBCType.BIGINT -> "bigint",
     JDBCType.BOOLEAN -> "int",
     JDBCType.CHAR -> "text",
@@ -88,6 +89,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
     JDBCType.TIMESTAMP_WITH_TIMEZONE -> "datetime", 
     JDBCType.TIMESTAMP -> "datetime",
     JDBCType.TINYINT -> "int",
+    JDBCType.REAL -> "double",
     JDBCType.VARCHAR -> "text")
     
   
@@ -613,7 +615,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
       }
     } catch {
       case e : Throwable => {
-        logger.info(s"The SQL type ${sqlType} is not recognized as a JDBC type, text will be used")
+        val jdbcType = JDBCType.valueOf(sqlType)
+        logger.info(s"The SQL type ${sqlType} (${jdbcType.name}) is not recognized as a JDBC type, text will be used")
         "text"
       }
     }
