@@ -97,7 +97,7 @@ object Ipa {
   var nbMod: Int = _
   var distDs: String = _
   
-  var globalConfig = ConfigFactory.load()
+  var globalConfig = ConfigFactory.load().resolve()
   
   def openEtl(cliConfig: CliConfig): EtlImpl = {
     val etl = new EtlImpl(globalConfig)
@@ -124,7 +124,7 @@ object Ipa {
         
       // Setting the file as a system property file
       val overrideConfig = ConfigFactory.parseFile(cfgFile)
-      globalConfig = overrideConfig.withFallback(globalConfig)
+      globalConfig = overrideConfig.withFallback(globalConfig).resolve()
     }
   }
    

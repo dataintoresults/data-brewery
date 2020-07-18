@@ -74,7 +74,7 @@ trait DataStoreFactory  {
 
 
 object EtlImpl {
-  private lazy final val defaultConfig = ConfigFactory.load()
+  private lazy final val defaultConfig = ConfigFactory.load().resolve()
 }
 
 class EtlImpl(private val _config : Config = EtlImpl.defaultConfig,

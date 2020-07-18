@@ -139,8 +139,6 @@ class PostgreSqlLiveTest extends FunSuite {
   test("Live test of postgresql - read a table from specified schema") {
     val store = initStore()
 
-    val expectedContent = "a, b\n99, toto\n2, tata\n"
-    
     Try {
       store.execute("drop schema if exists test_schema cascade")
       store.execute("create schema test_schema")
@@ -149,6 +147,8 @@ class PostgreSqlLiveTest extends FunSuite {
     }.recover { 
       case _ => cancel(s"Couldn't setup the database for the test")
     }
+    val expectedContent = "a, b\n99, toto\n2, tata\n"
+    
 
     val table = store.table("test_z")
     assert(table.isDefined) withClue ", table 'test_z' not found"
@@ -159,19 +159,23 @@ class PostgreSqlLiveTest extends FunSuite {
   }
 
   test("Live test of postgresql - auto discovery") { 
+    {
+      val store = initStore()
+
+      Try {
+        store.execute("drop schema if exists test_auto cascade")
+        store.execute("create schema test_auto")
+        store.execute("create table test_auto.test_b as select 2 as a, 'toto' as b union all select 2, 'tata'")
+        store.execute("create table test_auto.test_c as select 3 as a, 'toto' as b union all select 2, 'tata'")
+      }.recover { 
+        case _ => cancel(s"Couldn't setup the database for the test")
+      }
+    }
+
     val store = initStore()
 
     val expectedContent = "a, b\n2, toto\n2, tata\n"
     
-    Try {
-      store.execute("drop schema if exists test_auto cascade")
-      store.execute("create schema test_auto")
-      store.execute("create table test_auto.test_b as select 2 as a, 'toto' as b union all select 2, 'tata'")
-      store.execute("create table test_auto.test_c as select 3 as a, 'toto' as b union all select 2, 'tata'")
-    }.recover { 
-      case _ => cancel(s"Couldn't setup the database for the test")
-    }
-
     val table = store.table("test_b")
     assert(table.isDefined) withClue ", table 'test_auto.test_b' not found"
 
@@ -191,7 +195,9 @@ class PostgreSqlLiveTest extends FunSuite {
       3.1416::double precision as double_value,
       3.1417::float as float_value,
       'long text'::varchar(60000) as long_text_value,
-      'short text'::varchar(255) as short_text_value""")) { ds => 
+      'short text'::varchar(255) as short_text_value,
+      null::varchar(255) as null_varchar,
+      null::int as null_int""")) { ds => 
 
       val row = ds.next()
       val dtAny = row(0)
@@ -203,6 +209,9 @@ class PostgreSqlLiveTest extends FunSuite {
       val floatAny = row(6)
       val textAny = row(7)
       val bigtextAny = row(8)
+      val nullVarcharAny = row(9)
+      val nullIntAny = row(10)
+
 
       ds.close
 
@@ -215,6 +224,8 @@ class PostgreSqlLiveTest extends FunSuite {
       assert(floatAny.isInstanceOf[java.lang.Double]) withClue s"3.1417::float should be of type LocalDateTime but is ${floatAny.getClass}"
       assert(textAny.isInstanceOf[String]) withClue s"'long text'::varchar(60000) should be of type String but is ${textAny.getClass}"
       assert(bigtextAny.isInstanceOf[String]) withClue s"'short text'::varchar(255) should be of type String but is ${bigtextAny.getClass}"
+      assert(nullVarcharAny == null) withClue s"null::varchar(255) should be null"
+      assert(nullIntAny == null) withClue s"null::int should be null"
 
 
       val dt = dtAny.asInstanceOf[java.time.LocalDate]

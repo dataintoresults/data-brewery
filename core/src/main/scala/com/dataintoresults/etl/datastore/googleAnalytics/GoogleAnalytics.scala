@@ -95,7 +95,9 @@ class GoogleAnalytics {
 	  
     val dateRange = new DateRange()
 		dateRange.setStartDate(startDate)
-		dateRange.setEndDate(endDate)
+    dateRange.setEndDate(endDate)
+    
+    logger.info(s"Google Analytics report : Date range from ${dateRange.getStartDate} to ${dateRange.getEndDate}")
 
 		val metrics2 = metrics.map {m => new Metric().setExpression(m)}
 		val dimensions2 = dimensions.map {d => new Dimension().setName(d)}
@@ -126,6 +128,7 @@ class GoogleAnalytics {
           true
         // If we are at the end of a batch we load a new one
         else if(nextPageToken.isDefined) {
+          logger.info(s"Google Ananalytics : Loading next request")
           rowIterator = nextBatch()
           rowIterator.hasNext
         }
@@ -164,7 +167,13 @@ class GoogleAnalytics {
           case Success(s) => s
         }
 
-        nextPageToken = if(report.getNextPageToken() != null) Some(report.getNextPageToken()) else None
+        nextPageToken = if(report.getNextPageToken() != null) {
+          logger.info(s"Google Ananalytics : There will be a next request to be made, token ${report.getNextPageToken()}")
+          Some(report.getNextPageToken())
+        } else {
+          logger.info(s"Google Ananalytics : no next request to be made")
+          None
+        }
 
         parseReport(report)
       }

@@ -133,7 +133,10 @@ class PostgreSqlStore extends SqlStore {
    * Use COPY command from Postgresql to be faster.
    * Postgresql doesn't batch well
    */
-  override def createDataSink(schema: String, name: String, columns: Seq[Column]) : DataSink = {  
+ /* override def createDataSink(schema: String, name: String, columns: Seq[Column]) : DataSink = {  
+
+  // Way too slow ??? Why ??
+
     val db = getDB()
     val dsName = this.name
       
@@ -165,7 +168,7 @@ class PostgreSqlStore extends SqlStore {
         //println("PgDataSink.put")
         val rowStr = (row zip parsers) map { case (r, p) => p(r) }
           
-        val str = (rowStr mkString "|") +  "\n"
+        val str = rowStr.mkString("","|","\n")
                 
         //logger.info(str)
         val bytes = str.getBytes("UTF8")
@@ -188,7 +191,7 @@ class PostgreSqlStore extends SqlStore {
         db.close() 
       }
     }
-  }
+  }*/
 }
 
 object PostgreSqlStore {

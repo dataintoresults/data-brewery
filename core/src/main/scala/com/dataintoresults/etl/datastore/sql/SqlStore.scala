@@ -82,6 +82,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
     JDBCType.NCHAR -> "text",
     JDBCType.NUMERIC -> "numeric",
     JDBCType.NVARCHAR -> "text",
+    JDBCType.OTHER -> "text",
     JDBCType.SMALLINT -> "int",
     JDBCType.SQLXML -> "bigtext",
     JDBCType.TIME -> "datetime",
@@ -382,7 +383,9 @@ abstract class SqlStore extends EtlDatastore with DataStore {
       private var _hasNext = false;
       
       def structure: Seq[Column] = struct
-      
+
+      private val srcStructure: Seq[Column] = structureFromResultSetMetaData(rs.getMetaData)
+
       def hasNext() : Boolean = {
         if (!didNext) {
             _hasNext = rs.next();
@@ -396,10 +399,9 @@ abstract class SqlStore extends EtlDatastore with DataStore {
           rs.next()
         didNext = false;
         i = i +1
-        val metadata = rs.getMetaData
-        val srcColCount = metadata.getColumnCount()
-        val srcStructure = structureFromResultSetMetaData(metadata)
-        val row : Seq[Any] = 1 to srcColCount map { i => 
+        val srcStructureLength = srcStructure.length
+
+        val row : Seq[Any] = 1 to srcStructureLength map { i => 
           parseJdbcCell(rs, i, srcStructure(i-1))
         }
         
@@ -422,7 +424,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
   def parseJdbcCell(rs: ResultSet, i: Int, column: Column) = {
     
     try {
-      column.basicType match {
+      val result = column.basicType match {
         case Column.INT => rs.getInt(i)
         case Column.BIGINT => rs.getLong(i)
         case Column.BOOLEAN => if(rs.getBoolean(i)) 1 else 0
@@ -435,6 +437,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
         case Column.VARIANT => rs.getString(i)
         case Column.LAZY => rs.getObject(i)
       }
+      // But was it null, in such case, result is innapropriate
+      if(rs.wasNull()) null else result
     } catch {
       case e: Exception => throw new RuntimeException(s"Issue reading a cell of type ${column.colType} (col name ${column.name}) in datastore ${name}. The database type is ${rs.getMetaData().getColumnTypeName(i)}", e)
     }
