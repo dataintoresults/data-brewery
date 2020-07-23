@@ -339,6 +339,6 @@ class PostgreSqlLiveTest extends FunSuite {
 
     val timeBulk = f(initStore("true"))
 
-    System.out.println(s"no bulk ${timeNotBulk}, bulk ${timeBulk}")
+    assert(timeBulk < timeNotBulk) withClue "Bulk loading should be faster than batch insert"
   }
 }
