@@ -119,6 +119,7 @@ case class XlsxWriter(
               case Column.BIGINT => cell.setCellValue(content.asInstanceOf[Long])
               case Column.BIGTEXT => cell.setCellValue(content.asInstanceOf[String])
               case Column.BOOLEAN => cell.setCellValue(content.asInstanceOf[Boolean])
+              case Column.DOUBLE => cell.setCellValue(content.asInstanceOf[Double])
               case Column.DATE => {
                 cell.setCellStyle(dateStyle)
                 cell.setCellValue(content.asInstanceOf[LocalDate])
