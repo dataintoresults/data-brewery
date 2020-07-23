@@ -6,7 +6,7 @@ libraryDependencies ++= Seq(
   
   // Access to data sources
   "org.scalikejdbc" %% "scalikejdbc" % "2.5.1",
-  "org.postgresql" % "postgresql" % "42.2.5",
+  "org.postgresql" % "postgresql" % "42.2.14",
   "mysql" % "mysql-connector-java" % "8.0.17",
   "com.h2database" % "h2" % "1.4.199",
   "com.microsoft.sqlserver" % "mssql-jdbc" % "6.4.0.jre8",

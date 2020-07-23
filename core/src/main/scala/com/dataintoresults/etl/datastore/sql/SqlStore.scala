@@ -437,7 +437,7 @@ abstract class SqlStore extends EtlDatastore with DataStore {
         case Column.VARIANT => rs.getString(i)
         case Column.LAZY => rs.getObject(i)
       }
-      // But was it null, in such case, result is innapropriate
+      // But was it null? in such case, result is innapropriate
       if(rs.wasNull()) null else result
     } catch {
       case e: Exception => throw new RuntimeException(s"Issue reading a cell of type ${column.colType} (col name ${column.name}) in datastore ${name}. The database type is ${rs.getMetaData().getColumnTypeName(i)}", e)

@@ -40,6 +40,7 @@ import com.dataintoresults.etl.core.Table
 import com.dataintoresults.etl.core.Etl
 
 import com.dataintoresults.etl.core.EtlParameterHelper._
+import com.dataintoresults.etl.core.EtlParameter
 
 
 import com.dataintoresults.etl.impl.EtlImpl
@@ -49,9 +50,12 @@ import java.time.ZoneOffset
 
 class PostgreSqlStore extends SqlStore {
   private val logger: Logger = Logger(this.getClass())
-   def sqlType = "postgresql"
+  def sqlType = "postgresql"
   def jdbcDriver : String = "org.postgresql.Driver"
   def jdbcUrl : String = createJdbcUrl(host, port, database)
+
+  private val _useBulkLoad = EtlParameter[String](nodeAttribute="useBulkLoad", configAttribute="dw.datastore."+name+".useBulkLoad", defaultValue="false")
+  def useBulkLoad = _useBulkLoad.value.toBoolean
   
   override def defaultConnectionParameters: String = "sslmode=prefer&sslfactory=org.postgresql.ssl.NonValidatingFactory"
   
@@ -108,8 +112,8 @@ class PostgreSqlStore extends SqlStore {
       case None => ""
       case a : LocalDateTime => a.format(fmt2) + "Z"
       case a : LocalDate => a.format(fmt3) + " 00:00:00.000Z"
-      case a : Date => throw new RuntimeException("not expected")
-      case a : Any => ""
+      case _ : Date => throw new RuntimeException("not expected")
+      case _ => ""
     }
   }
   
@@ -133,7 +137,16 @@ class PostgreSqlStore extends SqlStore {
    * Use COPY command from Postgresql to be faster.
    * Postgresql doesn't batch well
    */
- /* override def createDataSink(schema: String, name: String, columns: Seq[Column]) : DataSink = {  
+  override def createDataSink(schema: String, name: String, columns: Seq[Column]) : DataSink = {  
+    if(this.useBulkLoad) {
+      logger.debug("PostgreSqlStore : Use bulk load")
+      createDataSinkBulk(schema, name, columns)
+    }
+    else 
+      super.createDataSink(schema, name, columns)
+  }
+
+  def createDataSinkBulk(schema: String, name: String, columns: Seq[Column]) : DataSink = {  
 
   // Way too slow ??? Why ??
 
@@ -191,7 +204,7 @@ class PostgreSqlStore extends SqlStore {
         db.close() 
       }
     }
-  }*/
+  }
 }
 
 object PostgreSqlStore {

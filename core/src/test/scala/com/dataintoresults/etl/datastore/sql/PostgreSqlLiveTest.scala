@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (C) 2018 by Obsidian SAS : https://dataintoresults.com/
+ * Copyright (C) 2020 by Obsidian SAS : https://dataintoresults.com/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ class PostgreSqlLiveTest extends FunSuite {
     if(!configFile.exists)
       cancel(s"you need a configuration file $configPath for this test") 
   
-    val config = ConfigFactory.parseFile(configFile)  
+    val config = ConfigFactory.parseFile(configFile)
 
     val etl = new EtlImpl(config)
     etl.load(xml)
@@ -88,9 +88,9 @@ class PostgreSqlLiveTest extends FunSuite {
     etl
   }
 
-  def initStore()  = {
+  def initStore(useBulkLoad: String = "false")  = {
     val xml = 
-      <datastore name="test_pg" type="postgresql">
+      <datastore name="test_pg" type="postgresql" useBulkLoad={useBulkLoad}>
         <table name="test_a"/>
         <table schema="test_schema" name="test_z"/>
         <autoDiscovery schema="test_auto"/>
@@ -112,9 +112,10 @@ class PostgreSqlLiveTest extends FunSuite {
 
     val store = PostgreSqlStore.fromXml(xml, config)
 
+    assertResult(useBulkLoad.toBoolean)(store.useBulkLoad) withClue "Issue setting the bulk mode"
+
     store
   }
-
 
   test("Live test of postgresql - read a table from current schema") {
     val store = initStore()
@@ -251,17 +252,15 @@ class PostgreSqlLiveTest extends FunSuite {
       'long text'::varchar(60000) as long_text_value,
       'short text'::varchar(255) as short_text_value""")) { ds =>
 
-    store.execute("drop schema if exists test_sink cascade")
-    store.execute("create schema test_sink")
+      store.execute("drop schema if exists test_sink cascade")
+      store.execute("create schema test_sink")
 
-    store.createTable("test_sink", "sink", ds.structure)
-    using(store.createDataSink("test_sink", "sink", ds.structure)) { sink =>
-      sink.put(ds.next)
+      store.createTable("test_sink", "sink", ds.structure)
+      using(store.createDataSink("test_sink", "sink", ds.structure)) { sink =>
+        sink.put(ds.next)
+      }
     }
-  }
 
-
-    
     using(store.createDataSource("""select * from test_sink.sink""")) { ds =>
 
       val row = ds.next()
@@ -314,4 +313,32 @@ class PostgreSqlLiveTest extends FunSuite {
     }
   }
 
+  test("Live test of postgresql - check bulkload perf") {
+    val f = (store: PostgreSqlStore) => {
+      val startTime = System.currentTimeMillis()
+      using(store.createDataSource("""
+          select i, 
+            md5(i::varchar) as a, 
+            case when i % 2 = 0 then i else null end as b
+          from generate_series(1, 10*1000) i""")) { ds =>
+
+        store.execute("drop schema if exists test_sink cascade")
+        store.execute("create schema test_sink")
+
+        store.createTable("test_sink", "sunk_bulk", ds.structure)
+
+        val startTime = System.currentTimeMillis()
+        using(store.createDataSink("test_sink", "sunk_bulk", ds.structure)) { sink =>
+          while(ds.hasNext) sink.put(ds.next)
+        }
+        System.currentTimeMillis() - startTime
+      }
+    }
+
+    val timeNotBulk = f(initStore("false"))
+
+    val timeBulk = f(initStore("true"))
+
+    System.out.println(s"no bulk ${timeNotBulk}, bulk ${timeBulk}")
+  }
 }
