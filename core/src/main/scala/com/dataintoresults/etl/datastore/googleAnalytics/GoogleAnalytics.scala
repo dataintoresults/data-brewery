@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- * Copyright (C) 2018 by Obsidian SAS : https://dataintoresults.com/
+ * Copyright (C) 2018,2020 by Obsidian SAS : https://dataintoresults.com/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,19 @@ class GoogleAnalytics {
 			.setApplicationName(applicationName).build())
   }
 
+  def googleDateToLocalDate(gDate: String) = {
+    val fullDate = """(\d+)-(\d+)-(\d+)""".r
+    val daysAgo = """(\d+)daysago""".r
+    gDate.toLowerCase().trim() match {
+      case fullDate(y, m, d) => 
+        LocalDate.of(y.toInt, m.toInt, d.toInt)
+      case daysAgo(d) => 
+        LocalDate.now().minus(d.toInt+1, ChronoUnit.DAYS)
+      case "yesterday" =>
+        LocalDate.now().minus(1, ChronoUnit.DAYS)
+    }
+  }
+
 
   def query(viewId: String,
             metrics: Seq[String],
@@ -93,22 +106,28 @@ class GoogleAnalytics {
 
 		logger.info("Google Analytics report : dim = " + dimensions.mkString(",") + " measures = "  + metrics.mkString(","))
 	  
-    val dateRange = new DateRange()
-		dateRange.setStartDate(startDate)
-    dateRange.setEndDate(endDate)
+ 
+
     
-    logger.info(s"Google Analytics report : Date range from ${dateRange.getStartDate} to ${dateRange.getEndDate}")
+    val allDate = googleDateToLocalDate(startDate).toEpochDay
+      .until(googleDateToLocalDate(endDate).plusDays(1).toEpochDay)
+      .map(LocalDate.ofEpochDay)
+    
+    val allIntervals = allDate.dropRight(1).zip(allDate.drop(1))
+    
+    System.out.println(allIntervals)
+
+    logger.info(s"Google Analytics report : Date range from ${startDate} to ${endDate}")
 
 		val metrics2 = metrics.map {m => new Metric().setExpression(m)}
 		val dimensions2 = dimensions.map {d => new Dimension().setName(d)}
 
- 
-
-		
     new Iterator[Seq[Object]] {
       private var rowNumber = 0L
       private var lastDate: String = null
       private def service = conn.get
+
+      private var nextInterval = allIntervals.iterator
 
 		  private var nextPageToken = Option.empty[String]
 
@@ -116,7 +135,15 @@ class GoogleAnalytics {
       val baseRequest = new ReportRequest()
         .setViewId(viewId)
         .setPageSize(rowsPerPage) // Max value for GA. 10k row per pages.
-        .setDateRanges(Arrays.asList(dateRange))
+        .setDateRanges(Arrays.asList({
+          val interval = nextInterval.next()
+          val startDate = interval._1.toString
+          val endDate = interval._2.toString
+          logger.info(s"Google Ananalytics : Loading next date interval [$startDate, $endDate[")
+          val dateRange = new DateRange()
+          dateRange.setStartDate(startDate)
+          dateRange.setEndDate(endDate)
+        }))
         .setDimensions(dimensions2.asJava)
         .setMetrics(metrics2.asJava);
 		
@@ -129,6 +156,18 @@ class GoogleAnalytics {
         // If we are at the end of a batch we load a new one
         else if(nextPageToken.isDefined) {
           logger.info(s"Google Ananalytics : Loading next request")
+          rowIterator = nextBatch()
+          rowIterator.hasNext
+        }
+        else if(nextInterval.hasNext) {
+          val interval = nextInterval.next()
+          val startDate = interval._1.toString
+          val endDate = interval._2.toString
+          logger.info(s"Google Ananalytics : Loading next date interval [$startDate, $endDate[")
+          val dateRange = new DateRange()
+          dateRange.setStartDate(startDate)
+          dateRange.setEndDate(endDate)
+          baseRequest.setDateRanges(Arrays.asList(dateRange))
           rowIterator = nextBatch()
           rowIterator.hasNext
         }
@@ -154,7 +193,8 @@ class GoogleAnalytics {
       }
 
       private def nextBatch() = {
-        val request = nextPageToken.map { token => baseRequest.setPageToken(token) } getOrElse baseRequest
+        val request = nextPageToken.map { token => baseRequest.setPageToken(token) }
+          .getOrElse(baseRequest)
 
         // Create the GetReportsRequest object.
         val getReport = new GetReportsRequest()
