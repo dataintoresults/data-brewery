@@ -129,8 +129,8 @@ class GoogleSheetsStore extends EtlDatastore with DataStore {
                 case Column.BIGINT => d.longValue()
                 case Column.INT => d.intValue()
                 case Column.NUMERIC => d
-                case Column.DATETIME => DateUtil.getJavaDate(d.doubleValue()).toInstant().atOffset(ZoneOffset.UTC).toLocalDateTime()
-                case Column.DATE => DateUtil.getJavaDate(d.doubleValue().floor).toInstant().atOffset(ZoneOffset.UTC).toLocalDate() // What is after the decimal point is hours and minutes
+                case Column.DATETIME => DateUtil.getLocalDateTime(d.doubleValue())
+                case Column.DATE => DateUtil.getLocalDateTime(d.doubleValue().floor).toLocalDate() // What is after the decimal point is hours and minutes
                 case Column.BIGTEXT => d.toString();
                 case Column.TEXT => d.toString();
                 case _ => throw new RuntimeException(s"For Google Sheet table ${name}.${gsTable.name} for row ${r} and column ${col.name}, it's a numeric field and shouldn't be for this type.")
