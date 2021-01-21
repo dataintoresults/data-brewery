@@ -43,3 +43,5 @@ secret.conf
 /.bloop
 /.metals
 /project/.bloop
+project/project/.bloop/bicloud-build-build.json
+project/project/.bloop/bloop.settings.json

@@ -56,6 +56,9 @@ import com.dataintoresults.etl.impl.ColumnBasic
 import com.dataintoresults.etl.impl.ReplicateDataStoreImpl
 
 import com.dataintoresults.util.XmlHelper._
+import scala.util.Try
+import scala.util.Failure
+import scala.util.Success
 
 
 
@@ -432,8 +435,8 @@ abstract class SqlStore extends EtlDatastore with DataStore {
         case Column.BIGTEXT => rs.getString(i)
         case Column.NUMERIC => rs.getBigDecimal(i)
         case Column.DOUBLE => rs.getDouble(i)
-        case Column.DATE => rs.getDate(i).toLocalDate()
-        case Column.DATETIME => rs.getTimestamp(i).toLocalDateTime()
+        case Column.DATE => Try(rs.getDate(i).toLocalDate()).getOrElse(null) // catch null or some database have bad date
+        case Column.DATETIME => Try(rs.getTimestamp(i).toLocalDateTime()).getOrElse(null) // catch null or some database have bad date
         case Column.VARIANT => rs.getString(i)
         case Column.LAZY => rs.getObject(i)
       }
